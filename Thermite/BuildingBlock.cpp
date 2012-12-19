@@ -53,14 +53,14 @@ BuildingBlock::~BuildingBlock() {
     
 }
 
-bool BuildingBlock::init(b2World* world) {
-    return false;
-}
-
 bool BuildingBlock::isTouchingBlock(cocos2d::CCPoint p) {
-    if(this->boundingBox().containsPoint(p)) {
-            return true;
-    }
-    return false;
+    return this->boundingBox().containsPoint(p);
 }
 
+void BuildingBlock::applyBomb(cocos2d::CCPoint p, Bomb* bomb) {
+    CCLog("Explosion at Point: (%f, %f)", p.x, p.y);
+    CCLog("Bomb Type: %s", bomb->getName());
+    b2Body* origBody = getPhysicsBody();
+    
+    m_subdivisions = bomb->subdivide(origBody);
+}

@@ -249,6 +249,8 @@
 		8F03ED6F1671616E00FBF8CC /* HelloWorldScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F03ED6E1671616E00FBF8CC /* HelloWorldScene.cpp */; };
 		8F03ED711671616E00FBF8CC /* blocks.png in Resources */ = {isa = PBXBuildFile; fileRef = 8F03ED701671616E00FBF8CC /* blocks.png */; };
 		8F45045A167BEAE800C27CEC /* CCBox2DLayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F450459167BEAE800C27CEC /* CCBox2DLayer.cpp */; };
+		8F46E2A51680FE3300331FAF /* Bomb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F46E2A41680FE3300331FAF /* Bomb.cpp */; };
+		8F46E2A81681048200331FAF /* LegoBomb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F46E2A71681048200331FAF /* LegoBomb.cpp */; };
 		8F61005A1676A2FE004FCB41 /* Sandbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F6100591676A2FE004FCB41 /* Sandbox.cpp */; };
 		8F61005E1676AD84004FCB41 /* PhysicsSprite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F61005D1676AD84004FCB41 /* PhysicsSprite.cpp */; };
 		8F6100601676AF40004FCB41 /* BuildingBlock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F61005F1676AF3F004FCB41 /* BuildingBlock.cpp */; };
@@ -779,6 +781,10 @@
 		8F03ED701671616E00FBF8CC /* blocks.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = blocks.png; path = Resources/blocks.png; sourceTree = "<group>"; };
 		8F450457167BEA5C00C27CEC /* CCBox2DLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CCBox2DLayer.h; sourceTree = "<group>"; };
 		8F450459167BEAE800C27CEC /* CCBox2DLayer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CCBox2DLayer.cpp; sourceTree = "<group>"; };
+		8F46E2A21680FDDE00331FAF /* Bomb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bomb.h; sourceTree = "<group>"; };
+		8F46E2A41680FE3300331FAF /* Bomb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Bomb.cpp; sourceTree = "<group>"; };
+		8F46E2A61681041900331FAF /* LegoBomb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LegoBomb.h; sourceTree = "<group>"; };
+		8F46E2A71681048200331FAF /* LegoBomb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LegoBomb.cpp; sourceTree = "<group>"; };
 		8F6100571676A167004FCB41 /* Sandbox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Sandbox.h; sourceTree = "<group>"; };
 		8F6100591676A2FE004FCB41 /* Sandbox.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Sandbox.cpp; sourceTree = "<group>"; };
 		8F61005B1676A9B6004FCB41 /* BuildingBlock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BuildingBlock.h; sourceTree = "<group>"; };
@@ -1833,6 +1839,10 @@
 				8F6100591676A2FE004FCB41 /* Sandbox.cpp */,
 				8F03ED6E1671616E00FBF8CC /* HelloWorldScene.cpp */,
 				8F61005B1676A9B6004FCB41 /* BuildingBlock.h */,
+				8F46E2A21680FDDE00331FAF /* Bomb.h */,
+				8F46E2A41680FE3300331FAF /* Bomb.cpp */,
+				8F46E2A61681041900331FAF /* LegoBomb.h */,
+				8F46E2A71681048200331FAF /* LegoBomb.cpp */,
 				8F61005C1676ACEC004FCB41 /* PhysicsSprite.h */,
 				8F61005D1676AD84004FCB41 /* PhysicsSprite.cpp */,
 				8F61005F1676AF3F004FCB41 /* BuildingBlock.cpp */,
@@ -2137,6 +2147,8 @@
 				8F61005E1676AD84004FCB41 /* PhysicsSprite.cpp in Sources */,
 				8F6100601676AF40004FCB41 /* BuildingBlock.cpp in Sources */,
 				8F45045A167BEAE800C27CEC /* CCBox2DLayer.cpp in Sources */,
+				8F46E2A51680FE3300331FAF /* Bomb.cpp in Sources */,
+				8F46E2A81681048200331FAF /* LegoBomb.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

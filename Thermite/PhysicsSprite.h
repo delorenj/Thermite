@@ -18,6 +18,7 @@ class PhysicsSprite : public cocos2d::CCSprite
 public:
     PhysicsSprite();
     void setPhysicsBody(b2Body * body);
+    b2Body* getPhysicsBody();
     virtual bool isDirty(void);
     virtual cocos2d::CCAffineTransform nodeToParentTransform(void);
 private:

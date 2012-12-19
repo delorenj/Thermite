@@ -58,7 +58,8 @@ void Sandbox::ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent) {
         for(auto it = m_pBuildingBlocks.begin(); it != m_pBuildingBlocks.end(); it ++) {
             BuildingBlock* b = dynamic_cast<BuildingBlock*>(*it);
             if(b->isTouchingBlock(touchToPoint(touch))) {
-                CCLog("Touching Block!");
+                LegoBomb* bomb = new LegoBomb();
+                b->applyBomb(touchToPoint(touch), bomb);
             }
         }
     }

@@ -21,6 +21,10 @@ void PhysicsSprite::setPhysicsBody(b2Body * body)
     m_pBody = body;
 }
 
+b2Body* PhysicsSprite::getPhysicsBody() {
+    return m_pBody;
+}
+
 // this method will only get called if the sprite is batched.
 // return YES if the physics values (angles, position ) changed
 // If you return NO, then nodeToParentTransform won't be called.

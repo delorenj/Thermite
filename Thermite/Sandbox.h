@@ -13,6 +13,7 @@
 #include "Box2D.h"
 #include "CCBox2DLayer.h"
 #include "BuildingBlock.h"
+#include "LegoBomb.h"
 
 using namespace cocos2d;
 
