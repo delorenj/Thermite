@@ -251,6 +251,7 @@
 		8F45045A167BEAE800C27CEC /* CCBox2DLayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F450459167BEAE800C27CEC /* CCBox2DLayer.cpp */; };
 		8F46E2A51680FE3300331FAF /* Bomb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F46E2A41680FE3300331FAF /* Bomb.cpp */; };
 		8F46E2A81681048200331FAF /* LegoBomb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F46E2A71681048200331FAF /* LegoBomb.cpp */; };
+		8F4F17FD168294A10097F25B /* b2DebugDraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F4F17FB168294A10097F25B /* b2DebugDraw.cpp */; };
 		8F61005A1676A2FE004FCB41 /* Sandbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F6100591676A2FE004FCB41 /* Sandbox.cpp */; };
 		8F61005E1676AD84004FCB41 /* PhysicsSprite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F61005D1676AD84004FCB41 /* PhysicsSprite.cpp */; };
 		8F6100601676AF40004FCB41 /* BuildingBlock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F61005F1676AF3F004FCB41 /* BuildingBlock.cpp */; };
@@ -785,6 +786,8 @@
 		8F46E2A41680FE3300331FAF /* Bomb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Bomb.cpp; sourceTree = "<group>"; };
 		8F46E2A61681041900331FAF /* LegoBomb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LegoBomb.h; sourceTree = "<group>"; };
 		8F46E2A71681048200331FAF /* LegoBomb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LegoBomb.cpp; sourceTree = "<group>"; };
+		8F4F17FB168294A10097F25B /* b2DebugDraw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = b2DebugDraw.cpp; path = ../b2DebugDraw.cpp; sourceTree = "<group>"; };
+		8F4F17FC168294A10097F25B /* b2DebugDraw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = b2DebugDraw.h; path = ../b2DebugDraw.h; sourceTree = "<group>"; };
 		8F6100571676A167004FCB41 /* Sandbox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Sandbox.h; sourceTree = "<group>"; };
 		8F6100591676A2FE004FCB41 /* Sandbox.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Sandbox.cpp; sourceTree = "<group>"; };
 		8F61005B1676A9B6004FCB41 /* BuildingBlock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BuildingBlock.h; sourceTree = "<group>"; };
@@ -1830,6 +1833,8 @@
 		8F03ED691671616E00FBF8CC /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				8F4F17FB168294A10097F25B /* b2DebugDraw.cpp */,
+				8F4F17FC168294A10097F25B /* b2DebugDraw.h */,
 				8F03ED6A1671616E00FBF8CC /* AppDelegate.h */,
 				8F03ED6B1671616E00FBF8CC /* AppDelegate.cpp */,
 				8F03ED6D1671616E00FBF8CC /* HelloWorldScene.h */,
@@ -2149,6 +2154,7 @@
 				8F45045A167BEAE800C27CEC /* CCBox2DLayer.cpp in Sources */,
 				8F46E2A51680FE3300331FAF /* Bomb.cpp in Sources */,
 				8F46E2A81681048200331FAF /* LegoBomb.cpp in Sources */,
+				8F4F17FD168294A10097F25B /* b2DebugDraw.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -33,7 +33,6 @@ bool PhysicsSprite::isDirty(void)
     return true;
 }
 
-// returns the transform matrix according the Chipmunk Body values
 CCAffineTransform PhysicsSprite::nodeToParentTransform(void)
 {
     b2Vec2 pos  = m_pBody->GetPosition();

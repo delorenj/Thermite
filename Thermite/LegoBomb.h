@@ -9,8 +9,6 @@
 #ifndef Thermite_LegoBomb_h
 #define Thermite_LegoBomb_h
 
-#include "cocos2d.h"
-#include "Box2D.h"
 #include "Bomb.h"
 
 class LegoBomb : public Bomb {
@@ -20,9 +18,11 @@ public:
     ~LegoBomb();
     
     const char* getName();
-    list<b2Body*> subdivide(b2Body* body);
+    list<b2Body*> subdivide(b2Body* block);
     
 private:
+    b2Vec2 getEdgeBreakPoint(b2Body*, b2Vec2, int, int);
+    
     const int m_maxRadius = 100;
 };
 

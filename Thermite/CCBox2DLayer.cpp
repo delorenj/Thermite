@@ -27,20 +27,19 @@ b2World* CCBox2DLayer::initWorld() {
     
     // Create a world
     b2Vec2 gravity = b2Vec2(0.0f, -10.0f);
-    bool doSleep = true;
     m_pWorld = new b2World(gravity);
-    m_pWorld->SetAllowSleeping(doSleep);
+    m_pWorld->SetAllowSleeping(true);
     
-    //     m_debugDraw = new GLESDebugDraw( PTM_RATIO );
-    //     m_pWorld->SetDebugDraw(m_debugDraw);
+    m_pDebugDraw = new b2DebugDraw( PTM_RATIO );
+    m_pWorld->SetDebugDraw(m_pDebugDraw);
     
     uint32 flags = 0;
     flags += b2Draw::e_shapeBit;
-    //        flags += b2Draw::e_jointBit;
-    //        flags += b2Draw::e_aabbBit;
-    //        flags += b2Draw::e_pairBit;
-    //        flags += b2Draw::e_centerOfMassBit;
-    //m_debugDraw->SetFlags(flags);
+//            flags += b2Draw::e_jointBit;
+//            flags += b2Draw::e_aabbBit;
+//            flags += b2Draw::e_pairBit;
+//            flags += b2Draw::e_centerOfMassBit;
+    m_pDebugDraw->SetFlags(flags);
     
     
     // Define the ground body.
@@ -83,16 +82,6 @@ void CCBox2DLayer::update(float dt) {
     // generally best to keep the time step and iterations fixed.
     m_pWorld->Step(dt, velocityIterations, positionIterations);
     
-    //Iterate over the bodies in the physics world
-    for (b2Body* b = m_pWorld->GetBodyList(); b; b = b->GetNext())
-    {
-        if (b->GetUserData() != NULL) {
-            //Synchronize the AtlasSprites position and rotation with the corresponding body
-            CCSprite* myActor = (CCSprite*)b->GetUserData();
-            myActor->setPosition( CCPointMake( b->GetPosition().x * PTM_RATIO, b->GetPosition().y * PTM_RATIO) );
-            myActor->setRotation( -1 * CC_RADIANS_TO_DEGREES(b->GetAngle()) );
-        }
-    }
 }
 
 void CCBox2DLayer::draw() {
@@ -101,15 +90,9 @@ void CCBox2DLayer::draw() {
     // This is only for debug purposes
     // It is recommend to disable it
     //
-    CCLayer::draw();
-    
     ccGLEnableVertexAttribs( kCCVertexAttribFlag_Position );
-    
     kmGLPushMatrix();
-    
     m_pWorld->DrawDebugData();
-    
     kmGLPopMatrix();
-    
 }
 

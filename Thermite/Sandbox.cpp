@@ -14,8 +14,7 @@ Sandbox::Sandbox() {
 	this->setTouchEnabled(true);
 	this->colorLayer = new CCLayerColor;
 	this->colorLayer->initWithColor( ccc4(180, 180, 180, 255) );
-	this->addChild(this->colorLayer, 1);
-    
+//	this->addChild(this->colorLayer, 1);
     CCSize s = CCDirector::sharedDirector()->getWinSize();
         
     CCLabelTTF *label = CCLabelTTF::create("Sandbox Mode", "Marker Felt", 32);
@@ -35,7 +34,7 @@ Sandbox::~Sandbox() {
 CCScene* Sandbox::scene() {
     CCScene* scene = CCScene::create();
     CCLayer* layer = new Sandbox();
-    scene->addChild(layer);
+    scene->addChild(layer,0);
     layer->release();
     return scene;
 }

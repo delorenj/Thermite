@@ -11,6 +11,7 @@
 
 #include "cocos2d.h"
 #include "Box2D.h"
+#include "b2DebugDraw.h"
 
 #define PTM_RATIO 32
 
@@ -21,12 +22,13 @@ public:
     
     virtual b2World* getWorld();
     
-private:
+protected:
     b2World* initWorld();
     virtual void update(float dt);
     virtual void draw();
     
     b2World* m_pWorld;
+    b2DebugDraw* m_pDebugDraw;
 };
 
 
