@@ -248,6 +248,7 @@
 		8F03ED6C1671616E00FBF8CC /* AppDelegate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F03ED6B1671616E00FBF8CC /* AppDelegate.cpp */; };
 		8F03ED6F1671616E00FBF8CC /* HelloWorldScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F03ED6E1671616E00FBF8CC /* HelloWorldScene.cpp */; };
 		8F03ED711671616E00FBF8CC /* blocks.png in Resources */ = {isa = PBXBuildFile; fileRef = 8F03ED701671616E00FBF8CC /* blocks.png */; };
+		8F4501E4169A2EE90012900C /* DelaunayTriangulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F4501E2169A2EE90012900C /* DelaunayTriangulation.cpp */; };
 		8F45045A167BEAE800C27CEC /* CCBox2DLayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F450459167BEAE800C27CEC /* CCBox2DLayer.cpp */; };
 		8F46E2A51680FE3300331FAF /* Bomb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F46E2A41680FE3300331FAF /* Bomb.cpp */; };
 		8F46E2A81681048200331FAF /* LegoBomb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F46E2A71681048200331FAF /* LegoBomb.cpp */; };
@@ -780,6 +781,8 @@
 		8F03ED6D1671616E00FBF8CC /* HelloWorldScene.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HelloWorldScene.h; path = Classes/HelloWorldScene.h; sourceTree = "<group>"; };
 		8F03ED6E1671616E00FBF8CC /* HelloWorldScene.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = HelloWorldScene.cpp; path = Classes/HelloWorldScene.cpp; sourceTree = "<group>"; };
 		8F03ED701671616E00FBF8CC /* blocks.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = blocks.png; path = Resources/blocks.png; sourceTree = "<group>"; };
+		8F4501E2169A2EE90012900C /* DelaunayTriangulation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DelaunayTriangulation.cpp; path = Thermite/DelaunayTriangulation.cpp; sourceTree = "<group>"; };
+		8F4501E3169A2EE90012900C /* DelaunayTriangulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DelaunayTriangulation.h; path = Thermite/DelaunayTriangulation.h; sourceTree = "<group>"; };
 		8F450457167BEA5C00C27CEC /* CCBox2DLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CCBox2DLayer.h; sourceTree = "<group>"; };
 		8F450459167BEAE800C27CEC /* CCBox2DLayer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CCBox2DLayer.cpp; sourceTree = "<group>"; };
 		8F46E2A21680FDDE00331FAF /* Bomb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bomb.h; sourceTree = "<group>"; };
@@ -820,6 +823,8 @@
 		8F03EA2E1671616900FBF8CC = {
 			isa = PBXGroup;
 			children = (
+				8F4501E2169A2EE90012900C /* DelaunayTriangulation.cpp */,
+				8F4501E3169A2EE90012900C /* DelaunayTriangulation.h */,
 				8F03EA4D1671616900FBF8CC /* Thermite */,
 				8F03EA3C1671616900FBF8CC /* Frameworks */,
 				8F03EA3A1671616900FBF8CC /* Products */,
@@ -2155,6 +2160,7 @@
 				8F46E2A51680FE3300331FAF /* Bomb.cpp in Sources */,
 				8F46E2A81681048200331FAF /* LegoBomb.cpp in Sources */,
 				8F4F17FD168294A10097F25B /* b2DebugDraw.cpp in Sources */,
+				8F4501E4169A2EE90012900C /* DelaunayTriangulation.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -33,7 +33,9 @@ public:
     void setPosition(b2Vec2 p);
     
 protected:
-    int Bomb::det(int x1, int y1, int x2, int y2, int x3, int y3); 
+    int det(int x1, int y1, int x2, int y2, int x3, int y3); 
+    b2Body* convexDecomp(b2Vec2* verts, int n_verts, b2PolygonShape prototype, b2BodyDef * bodyDef, bool isDefinitelySimple = false);
+
     b2Vec2 m_position;
     int m_radius;
     const int m_maxRadius = 50;

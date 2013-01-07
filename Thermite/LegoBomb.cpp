@@ -69,13 +69,15 @@ list<b2Body*> LegoBomb::subdivide(b2Body* body) {
     p1 = body->GetLocalPoint(p1);
     p2 = body->GetLocalPoint(p2);
 
-    poly1.push_back(p1);
-    poly1.push_back(p2);
-    poly1.push_back(center);
-    
-    poly2.push_back(p1);
-    poly2.push_back(p2);
-    poly2.push_back(center);
+    convexDecomp(pshape->GetVertices(),sizeof(nodes3)/sizeof(b2Vec2),pshape,&body);
+
+//    poly1.push_back(p1);
+//    poly1.push_back(p2);
+//    poly1.push_back(center);
+//    
+//    poly2.push_back(p1);
+//    poly2.push_back(p2);
+//    poly2.push_back(center);
 
     // for (i=0; i<numVertices; i++) {
     //     d=det(p1.x, p1.y, center.x, center.y, verticesVec[i].x, verticesVec[i].y);
