@@ -20,7 +20,7 @@ public:
     CCBox2DLayer();
     ~CCBox2DLayer();
     
-    virtual b2World* getWorld();
+    b2World* getWorld();
     
 protected:
     b2World* initWorld();

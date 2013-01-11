@@ -14,6 +14,7 @@
 #include "CCBox2DLayer.h"
 #include "BuildingBlock.h"
 #include "LegoBomb.h"
+#include "b2Separator.h"
 
 using namespace cocos2d;
 
@@ -26,6 +27,7 @@ public:
     
 private:
     void initBlocks();
+    void initB2SeparatorExample();
     CCPoint touchToPoint(CCTouch* pTouch);
     void ccTouchesBegan(CCSet* pTouches, CCEvent* pEvent);
     void ccTouchesMoved(CCSet* pTouches, CCEvent* pEvent);

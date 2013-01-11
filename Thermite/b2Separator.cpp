@@ -9,7 +9,7 @@
 #include "b2Separator.h"
 #define MAX_VALUE 2147483647
 
-void b2Separator::Separate(b2Body* pBody, b2FixtureDef* pFixtureDef, vector<b2Vec2>* pVerticesVec, int scale=30) {
+void b2Separator::Separate(b2Body* pBody, b2FixtureDef* pFixtureDef, vector<b2Vec2>* pVerticesVec, int scale) {
     int i, n=pVerticesVec->size(), j, m;
     vector<b2Vec2> vec;
     vector<vector<b2Vec2> > figsVec;
@@ -56,7 +56,7 @@ int b2Separator::Validate(const vector<b2Vec2> &verticesVec) {
                 
                 if ((j!=i3)) {
                     j2=(j<n-1)?j+1:0;
-                    if (hitSegment(verticesVec[i].x,verticesVec[i].y,verticesVec[i2].x,verticesVec[i2].y,verticesVec[j].x,verticesVec[j].y,verticesVec[j2].x,verticesVec[j2].y).IsValid()) {
+                    if (hitSegment(verticesVec[i].x,verticesVec[i].y,verticesVec[i2].x,verticesVec[i2].y,verticesVec[j].x,verticesVec[j].y,verticesVec[j2].x,verticesVec[j2].y)) {
                         ret=1; // TODO: This may be wrong!!!
                     }
                 }
@@ -90,7 +90,7 @@ void b2Separator::calcShapes(vector<b2Vec2> &pVerticesVec, vector<vector<b2Vec2>
     b2Vec2 v1, v2;
     int k, h;
     vector<b2Vec2> *vec1, *vec2;
-    b2Vec2 v, hitV;
+    b2Vec2 *pV, hitV;
     bool isConvex;
     vector<vector<b2Vec2> > figsVec;
     queue<vector<b2Vec2> > queue;
@@ -124,9 +124,10 @@ void b2Separator::calcShapes(vector<b2Vec2> &pVerticesVec, vector<vector<b2Vec2>
                         v1=vec[j1];
                         v2=vec[j2];
                         
-                        v = hitRay(p1.x,p1.y,p2.x,p2.y,v1.x,v1.y,v2.x,v2.y);
+                        pV = hitRay(p1.x,p1.y,p2.x,p2.y,v1.x,v1.y,v2.x,v2.y);
                         
-                        if (v.IsValid()) {
+                        if (pV) {
+                            b2Vec2 v = *pV;
                             dx=p2.x-v.x;
                             dy=p2.y-v.y;
                             t=dx*dx+dy*dy;
@@ -227,62 +228,53 @@ void b2Separator::calcShapes(vector<b2Vec2> &pVerticesVec, vector<vector<b2Vec2>
     }
 }
         
-		private function hitRay(x1:Number,y1:Number,x2:Number,y2:Number,x3:Number,y3:Number,x4:Number,y4:Number):b2Vec2 {
-			var t1:Number=x3-x1,t2:Number=y3-y1,t3:Number=x2-x1,t4:Number=y2-y1,t5:Number=x4-x3,t6:Number=y4-y3,t7:Number=t4*t5-t3*t6,a:Number;
-            
-			a=(((t5*t2)-t6*t1)/t7);
-			var px:Number=x1+a*t3,py:Number=y1+a*t4;
-			var b1:Boolean=isOnSegment(x2,y2,x1,y1,px,py);
-			var b2:Boolean=isOnSegment(px,py,x3,y3,x4,y4);
-            
-			if ((b1&&b2)) {
-				return new b2Vec2(px,py);
-			}
-            
-			return null;
-		}
+b2Vec2* b2Separator::hitRay(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
+    int t1=x3-x1, t2=y3-y1, t3=x2-x1, t4=y2-y1, t5=x4-x3,t6=y4-y3, t7=t4*t5-t3*t6, a=(((t5*t2)-t6*t1)/t7);
+    int px=x1+a*t3, py=y1+a*t4;
+    bool b1=isOnSegment(x2,y2,x1,y1,px,py);
+    bool b2=isOnSegment(px,py,x3,y3,x4,y4);
+    
+    if (b1&&b2) {
+        return new b2Vec2(px,py);
+    }
+    return NULL;
+}
+
+b2Vec2* b2Separator::hitSegment(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
+    int t1=x3-x1, t2=y3-y1, t3=x2-x1, t4=y2-y1, t5=x4-x3, t6=y4-y3, t7=t4*t5-t3*t6, a=(((t5*t2)-t6*t1)/t7);
+    int px=x1+a*t3, py=y1+a*t4;
+    bool b1=isOnSegment(px,py,x1,y1,x2,y2);
+    bool b2=isOnSegment(px,py,x3,y3,x4,y4);
+    
+    if (b1&&b2) {
+        return new b2Vec2(px,py);
+    }
+    return NULL;
+}
+
+bool b2Separator::isOnSegment(int px, int py, int x1, int y1, int x2, int y2) {
+    bool b1=((((x1+0.1)>=px)&&px>=x2-0.1)||(((x1-0.1)<=px)&&px<=x2+0.1));
+    bool b2=((((y1+0.1)>=py)&&py>=y2-0.1)||(((y1-0.1)<=py)&&py<=y2+0.1));
+    return ((b1&&b2)&&isOnLine(px,py,x1,y1,x2,y2));
+}
         
-		private function hitSegment(x1:Number,y1:Number,x2:Number,y2:Number,x3:Number,y3:Number,x4:Number,y4:Number):b2Vec2 {
-			var t1:Number=x3-x1,t2:Number=y3-y1,t3:Number=x2-x1,t4:Number=y2-y1,t5:Number=x4-x3,t6:Number=y4-y3,t7:Number=t4*t5-t3*t6,a:Number;
-            
-			a=(((t5*t2)-t6*t1)/t7);
-			var px:Number=x1+a*t3,py:Number=y1+a*t4;
-			var b1:Boolean=isOnSegment(px,py,x1,y1,x2,y2);
-			var b2:Boolean=isOnSegment(px,py,x3,y3,x4,y4);
-            
-			if ((b1&&b2)) {
-				return new b2Vec2(px,py);
-			}
-            
-			return null;
-		}
-        
-		private function isOnSegment(px:Number,py:Number,x1:Number,y1:Number,x2:Number,y2:Number):Boolean {
-			var b1:Boolean=((((x1+0.1)>=px)&&px>=x2-0.1)||(((x1-0.1)<=px)&&px<=x2+0.1));
-			var b2:Boolean=((((y1+0.1)>=py)&&py>=y2-0.1)||(((y1-0.1)<=py)&&py<=y2+0.1));
-			return ((b1&&b2)&&isOnLine(px,py,x1,y1,x2,y2));
-		}
-        
-		private function pointsMatch(x1:Number,y1:Number,x2:Number,y2:Number):Boolean {
-			var dx:Number=(x2>=x1)?x2-x1:x1-x2,dy:Number=(y2>=y1)?y2-y1:y1-y2;
+bool b2Separator::pointsMatch(int x1 ,int y1 ,int x2 ,int y2) {
+			int dx=(x2>=x1)?x2-x1:x1-x2, dy=(y2>=y1)?y2-y1:y1-y2;
 			return ((dx<0.1)&&dy<0.1);
 		}
         
-		private function isOnLine(px:Number,py:Number,x1:Number,y1:Number,x2:Number,y2:Number):Boolean {
-			if ((((x2-x1)>0.1)||x1-x2>0.1)) {
-				var a:Number=(y2-y1)/(x2-x1),possibleY:Number=a*(px-x1)+y1,diff:Number=(possibleY>py)?possibleY-py:py-possibleY;
-				return (diff<0.1);
-			}
-            
-			return (((px-x1)<0.1)||x1-px<0.1);
-		}
+bool b2Separator::isOnLine(int px ,int py ,int x1 ,int y1 ,int x2 ,int y2) {
+    if ((((x2-x1)>0.1)||x1-x2>0.1)) {
+        int a=(y2-y1)/(x2-x1), possibleY=a*(px-x1)+y1, diff=(possibleY>py)?possibleY-py:py-possibleY;
+        return (diff<0.1);
+    }
+    return (((px-x1)<0.1)||x1-px<0.1);
+}
         
 int b2Separator::det(int x1, int y1, int x2, int y2, int x3, int y3) {
 			return x1*y2+x2*y3+x3*y1-y1*x2-y2*x3-y3*x1;
 }
         
-		private function err():void {
-			throw new Error("A problem has occurred. Use the Validate() method to see where the problem is.");
-		}
-	}
-}
+//		private function err():void {
+//			throw new Error("A problem has occurred. Use the Validate() method to see where the problem is.");
+//		}

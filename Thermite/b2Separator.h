@@ -73,8 +73,8 @@ public:
 private:
     
     void calcShapes(vector<b2Vec2> &pVerticesVec, vector<vector<b2Vec2> > &result);
-	b2Vec2 hitRay(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4);
-	b2Vec2 hitSegment(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4);
+	b2Vec2* hitRay(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4);
+	b2Vec2* hitSegment(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4);
 	bool isOnSegment(int px, int py, int x1, int y1, int x2, int y2);
     bool pointsMatch(int x1, int y1, int x2,int y2);
     bool isOnLine(int px, int py, int x1, int y1, int x2, int y2);
