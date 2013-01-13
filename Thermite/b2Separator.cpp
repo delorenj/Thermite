@@ -226,42 +226,68 @@ void b2Separator::calcShapes(vector<b2Vec2> &pVerticesVec, vector<vector<b2Vec2>
             queue.pop();
         }
     }
+    result = figsVec;
 }
         
 b2Vec2* b2Separator::hitRay(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
-    int t1=x3-x1, t2=y3-y1, t3=x2-x1, t4=y2-y1, t5=x4-x3,t6=y4-y3, t7=t4*t5-t3*t6, a=(((t5*t2)-t6*t1)/t7);
-    int px=x1+a*t3, py=y1+a*t4;
-    bool b1=isOnSegment(x2,y2,x1,y1,px,py);
-    bool b2=isOnSegment(px,py,x3,y3,x4,y4);
+    int t1 = x3-x1;
+    int t2 = y3-y1;
+    int t3 = x2-x1;
+    int t4 = y2-y1;
+    int t5 = x4-x3;
+    int t6 = y4-y3;
+    int t7 = t4*t5-t3*t6;
+
+    //DBZ Error. Undefined hit segment.
+    if(t7 == 0) return NULL;
     
-    if (b1&&b2) {
+    int  a = (((t5*t2) - t6*t1) / t7);
+    int px = x1+a*t3;
+    int py = y1+a*t4;
+    bool b1 = isOnSegment(x2,y2,x1,y1,px,py);
+    bool b2 = isOnSegment(px,py,x3,y3,x4,y4);
+    
+    if(b1 && b2) {
         return new b2Vec2(px,py);
     }
     return NULL;
 }
 
 b2Vec2* b2Separator::hitSegment(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
-    int t1=x3-x1, t2=y3-y1, t3=x2-x1, t4=y2-y1, t5=x4-x3, t6=y4-y3, t7=t4*t5-t3*t6, a=(((t5*t2)-t6*t1)/t7);
-    int px=x1+a*t3, py=y1+a*t4;
-    bool b1=isOnSegment(px,py,x1,y1,x2,y2);
-    bool b2=isOnSegment(px,py,x3,y3,x4,y4);
+    int t1 = x3-x1;
+    int t2 = y3-y1;
+    int t3 = x2-x1;
+    int t4 = y2-y1;
+    int t5 = x4-x3;
+    int t6 = y4-y3;
+    int t7 = t4*t5 - t3*t6;
     
-    if (b1&&b2) {
+    //DBZ Error. Undefined hit segment.
+    if(t7 == 0) return NULL;
+    
+    int  a = (((t5*t2) - t6*t1) / t7);
+    int px = x1+a*t3;
+    int py = y1+a*t4;
+    bool b1 = isOnSegment(px,py,x1,y1,x2,y2);
+    bool b2 = isOnSegment(px,py,x3,y3,x4,y4);
+    
+    if(b1 && b2) {
         return new b2Vec2(px,py);
     }
     return NULL;
 }
 
 bool b2Separator::isOnSegment(int px, int py, int x1, int y1, int x2, int y2) {
-    bool b1=((((x1+0.1)>=px)&&px>=x2-0.1)||(((x1-0.1)<=px)&&px<=x2+0.1));
-    bool b2=((((y1+0.1)>=py)&&py>=y2-0.1)||(((y1-0.1)<=py)&&py<=y2+0.1));
-    return ((b1&&b2)&&isOnLine(px,py,x1,y1,x2,y2));
+    bool b1 = ((((x1+0.1)>=px) && px>=x2-0.1) || (((x1-0.1)<=px) && px<=x2+0.1));
+    bool b2 = ((((y1+0.1)>=py) && py>=y2-0.1) || (((y1-0.1)<=py) && py<=y2+0.1));
+    return ((b1 && b2) && isOnLine(px,py,x1,y1,x2,y2));
 }
         
 bool b2Separator::pointsMatch(int x1 ,int y1 ,int x2 ,int y2) {
-			int dx=(x2>=x1)?x2-x1:x1-x2, dy=(y2>=y1)?y2-y1:y1-y2;
-			return ((dx<0.1)&&dy<0.1);
-		}
+    int dx = (x2>=x1) ? x2-x1 : x1-x2;
+    int dy = (y2>=y1) ? y2-y1 : y1-y2;
+    return ((dx<0.1) && dy<0.1);
+}
         
 bool b2Separator::isOnLine(int px ,int py ,int x1 ,int y1 ,int x2 ,int y2) {
     if ((((x2-x1)>0.1)||x1-x2>0.1)) {
