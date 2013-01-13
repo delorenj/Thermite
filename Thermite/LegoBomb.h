@@ -23,7 +23,7 @@ public:
 private:
     b2Vec2 getEdgeBreakPoint(b2Body*, b2Vec2, int, int);
     
-    const int m_maxRadius = 100;
+    static const int m_maxRadius = 100;
 };
 
 #endif

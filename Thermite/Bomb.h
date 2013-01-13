@@ -36,8 +36,8 @@ protected:
     int Bomb::det(int x1, int y1, int x2, int y2, int x3, int y3); 
     b2Vec2 m_position;
     int m_radius;
-    const int m_maxRadius = 50;
-    const int m_energy = 1000;
+    static const int m_maxRadius = 50;
+    static const int m_energy = 1000;
 };
 
 #endif

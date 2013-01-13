@@ -52,8 +52,8 @@ void Sandbox::initB2SeparatorExample() {
         bodyDef->type = b2_dynamicBody;
         bodyDef->position.Set(p.x/PTM_RATIO, p.y/PTM_RATIO);
         body = getWorld()->CreateBody(bodyDef);
-        fixtureDef->restitution = 0.4;
-        fixtureDef->friction = 0.2;
+        fixtureDef->restitution = 0.4f;
+        fixtureDef->friction = 0.2f;
         fixtureDef->density = 4;
         
         vector<b2Vec2>* vec = new vector<b2Vec2>();

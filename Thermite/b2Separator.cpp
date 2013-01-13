@@ -30,9 +30,9 @@ void b2Separator::Separate(b2Body* pBody, b2FixtureDef* pFixtureDef, vector<b2Ve
             pVerticesVec->push_back(b2Vec2(vec[j].x/scale,vec[j].y/scale));
         }
 
-        polyShape->Set((b2Vec2*)&pVerticesVec[0], pVerticesVec->size());
-        pFixtureDef->shape=polyShape;
-        pBody->CreateFixture(pFixtureDef);
+        //polyShape->Set((b2Vec2*)&pVerticesVec[0], pVerticesVec->size());
+        //pFixtureDef->shape=polyShape;
+        //pBody->CreateFixture(pFixtureDef);
     }
 }
         
