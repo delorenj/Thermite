@@ -33,7 +33,7 @@ void b2Separator::Separate(b2Body* pBody, b2FixtureDef* pFixtureDef, vector<b2Ve
         polyShape->Set(vertices, m);
         delete[] vertices;
         pFixtureDef->shape=polyShape;
-        pBody->CreateFixture(pFixtureDef);
+        pBody->CreateFixture(pFixtureDef); 
     }
 }
         

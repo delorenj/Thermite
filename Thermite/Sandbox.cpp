@@ -22,8 +22,8 @@ Sandbox::Sandbox() {
     label->setColor(ccc3(0,0,255));
     label->setPosition(ccp( s.width/2, s.height-50));
     
-    //this->initBlocks();
-    this->initB2SeparatorExample();
+    this->initBlocks();
+    //this->initB2SeparatorExample();
     
     scheduleUpdate();
 }

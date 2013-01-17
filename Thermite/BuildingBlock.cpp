@@ -13,7 +13,7 @@ using namespace cocos2d;
 BuildingBlock::BuildingBlock(CCBox2DLayer* ctx, float size, float x, float y) {
     m_pCtx = ctx;
     
-    CCSpriteBatchNode *bn = CCSpriteBatchNode::create("square.png", size);
+     CCSpriteBatchNode *bn = CCSpriteBatchNode::create("square.png", size);
     m_pSpriteTexture = bn->getTexture();
     m_pCtx->addChild(bn, 3);
     
