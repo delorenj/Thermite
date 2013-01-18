@@ -7,17 +7,17 @@
 //
 
 #include "BuildingBlock.h"
+#define TEXTURE_SIZE 256
 
 using namespace cocos2d;
 
 BuildingBlock::BuildingBlock(CCBox2DLayer* ctx, float size, float x, float y) {
     m_pCtx = ctx;
     
-     CCSpriteBatchNode *bn = CCSpriteBatchNode::create("square.png", size);
+     CCSpriteBatchNode *bn = CCSpriteBatchNode::create("square.png", TEXTURE_SIZE);
     m_pSpriteTexture = bn->getTexture();
     m_pCtx->addChild(bn, 3);
-    
-    PhysicsSprite::init();
+	PhysicsSprite::init();
     CCPoint p = CCPointMake(x, y);
     this->initWithTexture(m_pSpriteTexture, CCRectMake(0,0,size,size));
     this->autorelease();

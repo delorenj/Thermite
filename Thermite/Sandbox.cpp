@@ -16,12 +16,13 @@ Sandbox::Sandbox() {
 	this->colorLayer->initWithColor( ccc4(180, 180, 180, 255) );
 //	this->addChild(this->colorLayer, 1);
     CCSize s = CCDirector::sharedDirector()->getWinSize();
-        
-    CCLabelTTF *label = CCLabelTTF::create("Sandbox Mode", "Marker Felt", 32);
-    this->addChild(label, 2);
-    label->setColor(ccc3(0,0,255));
-    label->setPosition(ccp( s.width/2, s.height-50));
-    
+
+	// init background
+	CCTexture2D::setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGB565);
+    CCSprite* background = CCSprite::spriteWithFile("farm_ville_facebook_games_backgrounds.jpg", CCRectMake(0, 0, 1024, 768) );
+    background->setAnchorPoint(ccp(0,0));
+	this->addChild(background, 1);   
+
     this->initBlocks();
     //this->initB2SeparatorExample();
     
