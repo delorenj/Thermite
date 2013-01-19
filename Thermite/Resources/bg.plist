@@ -11,7 +11,7 @@
                 <key>offset</key>
                 <string>{0,0}</string>
                 <key>rotated</key>
-                <true/>
+                <false/>
                 <key>sourceColorRect</key>
                 <string>{{0,0},{1024,768}}</string>
                 <key>sourceSize</key>
@@ -25,9 +25,9 @@
             <key>realTextureFileName</key>
             <string>bg.pvr.ccz</string>
             <key>size</key>
-            <string>{1024,2048}</string>
+            <string>{2048,1024}</string>
             <key>smartupdate</key>
-            <string>$TexturePacker:SmartUpdate:e06adb62bf79426b76314cf52c80c031$</string>
+            <string>$TexturePacker:SmartUpdate:0578c992159066b7715ed9d6f57f0194$</string>
             <key>textureFileName</key>
             <string>bg.pvr.ccz</string>
         </dict>

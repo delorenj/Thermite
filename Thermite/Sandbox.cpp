@@ -19,12 +19,21 @@ Sandbox::Sandbox() {
 
 	// init background
 	CCTexture2D::setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGB565);
-    CCSprite* background = CCSprite::spriteWithFile("farm_ville_facebook_games_backgrounds.jpg", CCRectMake(0, 0, 1024, 768) );
+//    CCSprite* background = CCSprite::spriteWithFile("farm_ville_facebook_games_backgrounds.jpg", CCRectMake(0, 0, 1024, 768) );
+    CCSprite* background = CCSprite::spriteWithFile("bg.pvr.ccz", CCRectMake(0, 0, 1024, 768) );
+
     background->setAnchorPoint(ccp(0,0));
 	this->addChild(background, 1);   
 
-    this->initBlocks();
+//    this->initBlocks();
     //this->initB2SeparatorExample();
+	try {
+		this->initBreakables();
+		//this->initBlocks();
+	}
+	catch(exception e) {
+		CCLog("Oops");
+	}
     
     scheduleUpdate();
 }
@@ -39,6 +48,12 @@ CCScene* Sandbox::scene() {
     scene->addChild(layer,0);
     layer->release();
     return scene;
+}
+
+void Sandbox::initBreakables() {
+    CCSize s = CCDirector::sharedDirector()->getWinSize();
+
+    m_pBreakables.push_front(new Breakable(this, "square.png", s.width/2, s.height/2));
 }
 
 void Sandbox::initB2SeparatorExample() {

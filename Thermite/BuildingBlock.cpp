@@ -17,6 +17,11 @@ BuildingBlock::BuildingBlock(CCBox2DLayer* ctx, float size, float x, float y) {
      CCSpriteBatchNode *bn = CCSpriteBatchNode::create("square.png", TEXTURE_SIZE);
     m_pSpriteTexture = bn->getTexture();
     m_pCtx->addChild(bn, 3);
+
+//	CCTexture2D::setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGBA4444);
+//	CCSpriteBatchNode* spritesBgNode = CCSpriteBatchNode::batchNodeWithFile("Thermite.pvr.ccz");
+//	m_pCtx->addChild(spritesBgNode);    
+ 
 	PhysicsSprite::init();
     CCPoint p = CCPointMake(x, y);
     this->initWithTexture(m_pSpriteTexture, CCRectMake(0,0,size,size));

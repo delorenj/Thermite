@@ -13,6 +13,7 @@
 #include "Box2D.h"
 #include "CCBox2DLayer.h"
 #include "BuildingBlock.h"
+#include "Breakable.h"
 #include "LegoBomb.h"
 #include "b2Separator.h"
 
@@ -28,6 +29,7 @@ public:
 private:
     void initBlocks();
     void initB2SeparatorExample();
+	void initBreakables();
     CCPoint touchToPoint(CCTouch* pTouch);
     void ccTouchesBegan(CCSet* pTouches, CCEvent* pEvent);
     void ccTouchesMoved(CCSet* pTouches, CCEvent* pEvent);
@@ -36,6 +38,7 @@ private:
     bool isTouchingBlock(CCTouch* touch);
     
     list<BuildingBlock*> m_pBuildingBlocks;
+	list<Breakable*> m_pBreakables;
     CCLayerColor* colorLayer;
 };
 
