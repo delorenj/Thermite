@@ -150,7 +150,7 @@ void b2Separator::calcShapes(vector<b2Vec2> &pVerticesVec, vector<vector<b2Vec2>
                 vec1 = new vector<b2Vec2>();
                 vec2 = new vector<b2Vec2>();
                 
-                j1=h;
+                 j1=h;
                 j2=k;
                 v1=vec[j1];
                 v2=vec[j2];

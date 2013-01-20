@@ -25,11 +25,11 @@ Sandbox::Sandbox() {
     background->setAnchorPoint(ccp(0,0));
 	this->addChild(background, 1);   
 
-//    this->initBlocks();
-    //this->initB2SeparatorExample();
+
 	try {
+	 //   this->initBlocks();
+		//this->initB2SeparatorExample();
 		this->initBreakables();
-		//this->initBlocks();
 	}
 	catch(exception e) {
 		CCLog("Oops");
@@ -115,9 +115,9 @@ void Sandbox::ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent) {
     for (auto it = pTouches->begin(); it != pTouches->end(); it++) {
         CCTouch* touch = dynamic_cast<CCTouch*>(*it);
 
-        for(auto it = m_pBuildingBlocks.begin(); it != m_pBuildingBlocks.end(); it ++) {
-            BuildingBlock* b = dynamic_cast<BuildingBlock*>(*it);
-            if(b->isTouchingBlock(touchToPoint(touch))) {
+        for(auto it = m_pBreakables.begin(); it != m_pBreakables.end(); it ++) {
+            Breakable* b = dynamic_cast<Breakable*>(*it);
+            if(b->isTouching(touchToPoint(touch))) {
                 LegoBomb* bomb = new LegoBomb();
                 b->applyBomb(touchToPoint(touch), bomb);
             }

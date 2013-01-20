@@ -18,8 +18,8 @@ public:
     ~LegoBomb();
     
     const char* getName();
-    list<b2Body*> subdivide(b2Body* block);
-    
+	void subdivide(b2Body* body, vector<vector<b2Vec2>* > &shapeVerts);
+
 private:
     b2Vec2 getEdgeBreakPoint(b2Body*, b2Vec2, int, int);
     

@@ -23,7 +23,7 @@ public:
     ~Bomb();
     
     virtual const char* getName() = 0;
-    virtual list<b2Body*> subdivide(b2Body*) = 0;
+    virtual void subdivide(b2Body*, vector<vector<b2Vec2>* >&) = 0;
 
     int getRadius();
     int setRadius(int radius);
