@@ -96,3 +96,18 @@ void CCBox2DLayer::draw() {
     kmGLPopMatrix();
 }
 
+PhysicsSprite* CCBox2DLayer::getPhysicsSpriteAtXY(b2Vec2 coordinate) {
+		//	var touchedBody:b2Body=null;
+		//	world.QueryPoint(GetBodyCallback,coordinate);
+		//	function GetBodyCallback(fixture:b2Fixture):Boolean {
+		//		var shape:b2Shape=fixture.GetShape();
+		//		var inside:Boolean=shape.TestPoint(fixture.GetBody().GetTransform(),coordinate);
+		//		if (inside) {
+		//			touchedBody=fixture.GetBody();
+		//			return false;
+		//		}
+		//		return true;
+		//	}
+		//	return touchedBody;
+		return NULL;
+}

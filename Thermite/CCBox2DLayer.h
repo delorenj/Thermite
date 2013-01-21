@@ -12,6 +12,8 @@
 #include "cocos2d.h"
 #include "Box2D.h"
 #include "b2DebugDraw.h"
+#include "b2Separator.h"
+#include "PhysicsSprite.h"
 
 #define PTM_RATIO 32
 
@@ -21,7 +23,8 @@ public:
     ~CCBox2DLayer();
     
     b2World* getWorld();
-    
+	PhysicsSprite* getPhysicsSpriteAtXY(b2Vec2);
+
 protected:
     b2World* initWorld();
     virtual void update(float dt);

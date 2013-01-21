@@ -12,23 +12,18 @@ using namespace cocos2d;
 
 Sandbox::Sandbox() {
 	this->setTouchEnabled(true);
-	this->colorLayer = new CCLayerColor;
-	this->colorLayer->initWithColor( ccc4(180, 180, 180, 255) );
-//	this->addChild(this->colorLayer, 1);
     CCSize s = CCDirector::sharedDirector()->getWinSize();
 
 	// init background
 	CCTexture2D::setDefaultAlphaPixelFormat(kCCTexture2DPixelFormat_RGB565);
-//    CCSprite* background = CCSprite::spriteWithFile("farm_ville_facebook_games_backgrounds.jpg", CCRectMake(0, 0, 1024, 768) );
-    CCSprite* background = CCSprite::spriteWithFile("bg.pvr.ccz", CCRectMake(0, 0, 1024, 768) );
-
+    CCSprite* background = CCSprite::create("bg.pvr.ccz", CCRectMake(0, 0, 1024, 768) );
     background->setAnchorPoint(ccp(0,0));
 	this->addChild(background, 1);   
 
 
 	try {
-	 //   this->initBlocks();
-		//this->initB2SeparatorExample();
+//		this->initBlocks();
+//		this->initB2SeparatorExample();
 		this->initBreakables();
 	}
 	catch(exception e) {

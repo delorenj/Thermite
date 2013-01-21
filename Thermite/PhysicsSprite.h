@@ -11,7 +11,9 @@
 
 #include "cocos2d.h"
 #include "Box2D.h"
-#include "CCBox2DLayer.h"
+
+//REFACTOR:  This is defined twice...which is fucking retarded.
+#define PTM_RATIO 32
 
 class PhysicsSprite : public cocos2d::CCSprite
 {

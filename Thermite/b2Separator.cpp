@@ -89,9 +89,9 @@ void b2Separator::calcShapes(vector<b2Vec2> &pVerticesVec, vector<vector<b2Vec2>
     b2Vec2 p1, p2, p3;
     int j1, j2;
     b2Vec2 v1, v2;
-    int k, h;
+    int k=0, h=0;
     vector<b2Vec2> *vec1, *vec2;
-    b2Vec2 *pV, hitV;
+    b2Vec2 *pV, hitV(0,0);
     bool isConvex;
     vector<vector<b2Vec2> > figsVec;
     queue<vector<b2Vec2> > queue;
@@ -150,7 +150,7 @@ void b2Separator::calcShapes(vector<b2Vec2> &pVerticesVec, vector<vector<b2Vec2>
                 vec1 = new vector<b2Vec2>();
                 vec2 = new vector<b2Vec2>();
                 
-                 j1=h;
+                j1=h;
                 j2=k;
                 v1=vec[j1];
                 v2=vec[j2];

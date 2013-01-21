@@ -39,7 +39,6 @@ private:
     
     list<BuildingBlock*> m_pBuildingBlocks;
 	list<Breakable*> m_pBreakables;
-    CCLayerColor* colorLayer;
 };
 
 #endif
