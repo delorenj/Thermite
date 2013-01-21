@@ -112,12 +112,10 @@ PhysicsSprite* CCBox2DLayer::getPhysicsSpriteAtXY(const CCPoint coordinate) {
 		m_pWorld->QueryAABB(&callback, aabb);
 
 		if (callback.m_fixture) {
-			CCLog("Yay! Touched object!");
 			b2Body* body = callback.m_fixture->GetBody();
 			body->SetAwake(true);
 			return (PhysicsSprite*)body->GetUserData();
         } else {
-			CCLog("Nope, no object touched...");
 			return NULL;
 		}
 }

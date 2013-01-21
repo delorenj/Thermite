@@ -13,6 +13,7 @@ Prototype::Prototype() {
 
 	try {
 		testSimple();
+		testSeparator();
 	}
 	catch(exception e) {
 		CCLog("Oops...%s", e.what());
@@ -47,7 +48,49 @@ void Prototype::testSimple() {
 	ps->setTag(1);
     ps->setPosition( CCPointMake( m_centerPoint.x, m_centerPoint.y ) );
     ps->setPhysicsBody(body);
+	body->SetUserData(ps);
 	m_sprites[ps->getTag()] = ps;
+
+}
+
+void Prototype::testSeparator() {
+		b2Separator* sep = new b2Separator();
+        vector<b2Vec2>* vec = new vector<b2Vec2>();
+        vec->push_back(b2Vec2(-4, -4));
+        vec->push_back(b2Vec2(4, -4));
+        vec->push_back(b2Vec2(4, 0));
+        vec->push_back(b2Vec2(0, 0));
+        vec->push_back(b2Vec2(0, 4));
+		vec->push_back(b2Vec2(-4, 4));
+
+		m_bodyDef.position.Set((m_centerPoint.x-300)/PTM_RATIO, m_centerPoint.y/PTM_RATIO);
+		b2Body* body = getWorld()->CreateBody(&m_bodyDef);
+
+        sep->Separate(body, &m_fixtureDef, vec, PTM_RATIO);
+
+		PhysicsSprite* ps = new PhysicsSprite();
+		ps->setTag(2);
+		ps->setPosition( CCPointMake( m_centerPoint.x-300, m_centerPoint.y ) );
+		ps->setPhysicsBody(body);
+		body->SetUserData(ps);
+		m_sprites[ps->getTag()] = ps;
+
+		vec->clear();
+        vec->push_back(b2Vec2(0, 0));
+        vec->push_back(b2Vec2(4, 0));
+        vec->push_back(b2Vec2(4, 4));
+        vec->push_back(b2Vec2(0, 4));
+		m_bodyDef.position.Set((m_centerPoint.x-300+(4*PTM_RATIO))/PTM_RATIO, m_centerPoint.y/PTM_RATIO);
+		body = getWorld()->CreateBody(&m_bodyDef);
+
+        sep->Separate(body, &m_fixtureDef, vec, PTM_RATIO);
+
+		ps = new PhysicsSprite();
+		ps->setTag(3);
+		ps->setPosition( CCPointMake( m_centerPoint.x-300+(4*PTM_RATIO), m_centerPoint.y ) );
+		ps->setPhysicsBody(body);
+		body->SetUserData(ps);
+		m_sprites[ps->getTag()] = ps;
 
 }
 
@@ -58,11 +101,15 @@ CCPoint Prototype::touchToPoint(CCTouch* pTouch) {
 }
 
 void Prototype::ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent) {
+	PhysicsSprite* sprite;
     for (auto it = pTouches->begin(); it != pTouches->end(); it++) {
         CCTouch* touch = dynamic_cast<CCTouch*>(*it);
 		CCPoint touchPoint = touchToPoint(touch);
-		CCLog("Touch Point: (%f, %f)", touchPoint.x, touchPoint.y);
-		PhysicsSprite* sprite = getPhysicsSpriteAtXY(touchPoint);
+		sprite = getPhysicsSpriteAtXY(touchPoint);
+		if(sprite != NULL) {
+			CCLog("Got Sprite: %d", sprite->getTag());
+		}
+
     }
 }
 

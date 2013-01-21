@@ -25,6 +25,6 @@ private:
 	CCPoint m_centerPoint;
 
 	void testSimple();
-
+	void testSeparator();
 };
 
