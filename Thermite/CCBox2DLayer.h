@@ -14,6 +14,7 @@
 #include "b2DebugDraw.h"
 #include "b2Separator.h"
 #include "PhysicsSprite.h"
+#include "QueryCallback.h"
 
 #define PTM_RATIO 32
 
@@ -23,7 +24,7 @@ public:
     ~CCBox2DLayer();
     
     b2World* getWorld();
-	PhysicsSprite* getPhysicsSpriteAtXY(b2Vec2);
+	PhysicsSprite* getPhysicsSpriteAtXY(const cocos2d::CCPoint);
 
 protected:
     b2World* initWorld();
@@ -32,6 +33,8 @@ protected:
     
     b2World* m_pWorld;
     b2DebugDraw* m_pDebugDraw;
+	map<int, PhysicsSprite*> m_sprites;
+
 };
 
 

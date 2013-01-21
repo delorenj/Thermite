@@ -23,7 +23,6 @@ private:
 	b2BodyDef m_bodyDef;
 	b2FixtureDef m_fixtureDef;
 	CCPoint m_centerPoint;
-	map<int, PhysicsSprite*> m_sprites;
 
 	void testSimple();
 

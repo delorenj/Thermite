@@ -96,18 +96,28 @@ void CCBox2DLayer::draw() {
     kmGLPopMatrix();
 }
 
-PhysicsSprite* CCBox2DLayer::getPhysicsSpriteAtXY(b2Vec2 coordinate) {
-		//	var touchedBody:b2Body=null;
-		//	world.QueryPoint(GetBodyCallback,coordinate);
-		//	function GetBodyCallback(fixture:b2Fixture):Boolean {
-		//		var shape:b2Shape=fixture.GetShape();
-		//		var inside:Boolean=shape.TestPoint(fixture.GetBody().GetTransform(),coordinate);
-		//		if (inside) {
-		//			touchedBody=fixture.GetBody();
-		//			return false;
-		//		}
-		//		return true;
-		//	}
-		//	return touchedBody;
-		return NULL;
+PhysicsSprite* CCBox2DLayer::getPhysicsSpriteAtXY(const CCPoint coordinate) {
+		b2Body* touchedBody = NULL;
+		b2Vec2 touchWorld;
+		b2AABB aabb;
+		b2Vec2 d = b2Vec2(0.001f, 0.001f);	
+		CCPoint nPoint = convertToNodeSpace(coordinate);
+		touchWorld.Set(nPoint.x/PTM_RATIO, nPoint.y/PTM_RATIO);
+
+		aabb.lowerBound = touchWorld - d;
+		aabb.upperBound = touchWorld + d;
+
+		// Query the world for overlapping shapes.
+		QueryCallback callback(touchWorld);
+		m_pWorld->QueryAABB(&callback, aabb);
+
+		if (callback.m_fixture) {
+			CCLog("Yay! Touched object!");
+			b2Body* body = callback.m_fixture->GetBody();
+			body->SetAwake(true);
+			return (PhysicsSprite*)body->GetUserData();
+        } else {
+			CCLog("Nope, no object touched...");
+			return NULL;
+		}
 }

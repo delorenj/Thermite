@@ -60,14 +60,9 @@ CCPoint Prototype::touchToPoint(CCTouch* pTouch) {
 void Prototype::ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent) {
     for (auto it = pTouches->begin(); it != pTouches->end(); it++) {
         CCTouch* touch = dynamic_cast<CCTouch*>(*it);
-		CCLog("Touch Point: (%f, %f)", touchToPoint(touch).x, touchToPoint(touch).y);
-   //     for(auto jt = m_sprites.begin(); jt != m_sprites.end(); jt ++) {
-			//PhysicsSprite* ps = (*jt).second;
-			//auto fix = ps->getPhysicsBody()->GetFixtureList();
-			//do {
-			//	CCLog("Fix: %f", fix->GetAABB().Contains(touchToPoint(touch)));
-			//} while(fix = ps->getPhysicsBody()->GetFixtureList()->GetNext());
-   //     }
+		CCPoint touchPoint = touchToPoint(touch);
+		CCLog("Touch Point: (%f, %f)", touchPoint.x, touchPoint.y);
+		PhysicsSprite* sprite = getPhysicsSpriteAtXY(touchPoint);
     }
 }
 
