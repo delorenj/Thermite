@@ -44,9 +44,10 @@ void Prototype::testSimple() {
 	m_fixtureDef.shape = &shape;
 	body->CreateFixture(&m_fixtureDef);
 
+//	Only need below to attach box2d body to a cocos2d sprite...
 	PhysicsSprite* ps = new PhysicsSprite();
 	ps->setTag(1);
-    ps->setPosition( CCPointMake( m_centerPoint.x, m_centerPoint.y ) );
+    ps->setPosition( CCPointMake( m_centerPoint.x+300, m_centerPoint.y ) );
     ps->setPhysicsBody(body);
 	body->SetUserData(ps);
 	m_sprites[ps->getTag()] = ps;
@@ -54,46 +55,40 @@ void Prototype::testSimple() {
 }
 
 void Prototype::testSeparator() {
-		b2Separator* sep = new b2Separator();
-        vector<b2Vec2>* vec = new vector<b2Vec2>();
-        vec->push_back(b2Vec2(-4, -4));
-        vec->push_back(b2Vec2(4, -4));
-        vec->push_back(b2Vec2(4, 0));
-        vec->push_back(b2Vec2(0, 0));
-        vec->push_back(b2Vec2(0, 4));
-		vec->push_back(b2Vec2(-4, 4));
+	b2Separator* sep = new b2Separator();
+    vector<b2Vec2>* vec = new vector<b2Vec2>();
+    vec->push_back(b2Vec2(-4, -4));
+    vec->push_back(b2Vec2(4, -4));
+    vec->push_back(b2Vec2(4, 0));
+    vec->push_back(b2Vec2(0, 0));
+    vec->push_back(b2Vec2(0, 4));
+	vec->push_back(b2Vec2(-4, 4));
 
-		m_bodyDef.position.Set((m_centerPoint.x-300)/PTM_RATIO, m_centerPoint.y/PTM_RATIO);
-		b2Body* body = getWorld()->CreateBody(&m_bodyDef);
+	m_bodyDef.position.Set((m_centerPoint.x-300)/PTM_RATIO, m_centerPoint.y/PTM_RATIO);
+	b2Body* body = getWorld()->CreateBody(&m_bodyDef);
 
-        sep->Separate(body, &m_fixtureDef, vec, PTM_RATIO);
+    sep->Separate(body, &m_fixtureDef, vec, PTM_RATIO);
 
-		PhysicsSprite* ps = new PhysicsSprite();
-		ps->setTag(2);
-		ps->setPosition( CCPointMake( m_centerPoint.x-300, m_centerPoint.y ) );
-		ps->setPhysicsBody(body);
-		body->SetUserData(ps);
-		m_sprites[ps->getTag()] = ps;
-
-		vec->clear();
-        vec->push_back(b2Vec2(0, 0));
-        vec->push_back(b2Vec2(4, 0));
-        vec->push_back(b2Vec2(4, 4));
-        vec->push_back(b2Vec2(0, 4));
-		m_bodyDef.position.Set((m_centerPoint.x-300+(4*PTM_RATIO))/PTM_RATIO, m_centerPoint.y/PTM_RATIO);
-		body = getWorld()->CreateBody(&m_bodyDef);
-
-        sep->Separate(body, &m_fixtureDef, vec, PTM_RATIO);
-
-		ps = new PhysicsSprite();
-		ps->setTag(3);
-		ps->setPosition( CCPointMake( m_centerPoint.x-300+(4*PTM_RATIO), m_centerPoint.y ) );
-		ps->setPhysicsBody(body);
-		body->SetUserData(ps);
-		m_sprites[ps->getTag()] = ps;
-
+	//	Only need below to attach box2d body to a cocos2d sprite...
+	PhysicsSprite* ps = new PhysicsSprite();
+	ps->setTag(2);
+    ps->setPosition( CCPointMake( m_centerPoint.x+300, m_centerPoint.y ) );
+    ps->setPhysicsBody(body);
+	body->SetUserData(ps);
+	m_sprites[ps->getTag()] = ps;
 }
 
+void Prototype::testBreakBody(b2Body* body, const CCPoint touchPoint, const float radius) {
+	b2Separator* sep = new b2Separator();
+	CCLog("Breaking Body: %d", static_cast<PhysicsSprite*>(body->GetUserData())->getTag());
+	b2CircleShape bomb;
+	CCPoint local = convertToNodeSpaceAR(touchPoint);
+	bomb.m_radius = radius;
+	bomb.m_p = b2Vec2(local.x/PTM_RATIO, local.y/PTM_RATIO);
+	m_fixtureDef.shape = &bomb;
+	body->CreateFixture(&m_fixtureDef);
+
+}
 
 
 CCPoint Prototype::touchToPoint(CCTouch* pTouch) {
@@ -106,8 +101,9 @@ void Prototype::ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent) {
         CCTouch* touch = dynamic_cast<CCTouch*>(*it);
 		CCPoint touchPoint = touchToPoint(touch);
 		sprite = getPhysicsSpriteAtXY(touchPoint);
+
 		if(sprite != NULL) {
-			CCLog("Got Sprite: %d", sprite->getTag());
+			testBreakBody(sprite->getPhysicsBody(), touchPoint, 1.5f );
 		}
 
     }

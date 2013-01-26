@@ -26,5 +26,6 @@ private:
 
 	void testSimple();
 	void testSeparator();
+	void testBreakBody(b2Body* body, const CCPoint touchPoint, const float radius);
 };
 
