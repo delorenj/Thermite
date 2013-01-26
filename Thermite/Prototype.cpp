@@ -81,12 +81,28 @@ void Prototype::testSeparator() {
 void Prototype::testBreakBody(b2Body* body, const CCPoint touchPoint, const float radius) {
 	b2Separator* sep = new b2Separator();
 	CCLog("Breaking Body: %d", static_cast<PhysicsSprite*>(body->GetUserData())->getTag());
-	b2CircleShape bomb;
-	CCPoint local = convertToNodeSpaceAR(touchPoint);
-	bomb.m_radius = radius;
-	bomb.m_p = b2Vec2(local.x/PTM_RATIO, local.y/PTM_RATIO);
-	m_fixtureDef.shape = &bomb;
-	body->CreateFixture(&m_fixtureDef);
+	b2CircleShape bombShape;
+	b2Vec2 worldPoint =  b2Vec2(touchPoint.x/PTM_RATIO, touchPoint.y/PTM_RATIO);
+	b2Vec2 localPoint = body->GetLocalPoint(worldPoint);
+	bombShape.m_radius = radius;
+	bombShape.m_p = localPoint;
+	m_fixtureDef.shape = &bombShape;
+	b2Fixture* bomb = body->CreateFixture(&m_fixtureDef);
+	for(b2Fixture* fix = body->GetFixtureList(); fix; fix=fix->GetNext()) {
+		CCLog("TESTING FIXTURE:");
+		b2Shape::Type shapeType = fix->GetType();
+		if(shapeType != b2Shape::e_polygon) {
+			CCLog("Non-polygon encountered. Continuing...");
+			continue;
+		}
+		b2PolygonShape* shape = (b2PolygonShape*)fix->GetShape();
+		for(int i=0; i<shape->GetVertexCount(); i++) {
+			b2Vec2 vert = shape->GetVertex(i);
+			b2Vec2 wp = body->GetWorldPoint(vert);
+			bool pointIn = bomb->TestPoint(wp);
+			CCLog("\tVertex %d: (%f, %f)  :  %d", i, wp.x, wp.y, pointIn); 
+		}
+	}	
 
 }
 
