@@ -78,16 +78,35 @@ void Prototype::testSeparator() {
 	m_sprites[ps->getTag()] = ps;
 }
 
-void Prototype::testBreakBody(b2Body* body, const CCPoint touchPoint, const float radius) {
+void Prototype::testPlaceBomb(b2Body* body, const CCPoint touchPoint, const float radius) {
 	b2Separator* sep = new b2Separator();
 	CCLog("Breaking Body: %d", static_cast<PhysicsSprite*>(body->GetUserData())->getTag());
-	b2CircleShape bombShape;
+	vector<b2Vec2>* bombShape = generateBlastShape(radius);
+
+	try{
+		switch(sep->Validate(*bombShape)) {
+		case 1:
+			throw(new exception("Overlapping lines"));
+			break;
+		case 2:
+			throw(new exception("Points are not in clockwise order"));
+			break;
+		case 3:
+			throw(new exception("Overlapping lines AND points are not in clockwise order"));
+			break;
+		case 0: 
+			CCLog("YAY?");
+			break;
+		}
+	} catch(exception e) {
+		CCLog("Illegal Bomb Blast: %s", e);
+	}
+
 	b2Vec2 worldPoint =  b2Vec2(touchPoint.x/PTM_RATIO, touchPoint.y/PTM_RATIO);
 	b2Vec2 localPoint = body->GetLocalPoint(worldPoint);
-	bombShape.m_radius = radius;
-	bombShape.m_p = localPoint;
-	m_fixtureDef.shape = &bombShape;
-	b2Fixture* bomb = body->CreateFixture(&m_fixtureDef);
+	sep->Separate(body, &m_fixtureDef, bombShape, PTM_RATIO);
+	//m_fixtureDef.shape = bombShape;
+	//b2Fixture* bomb = body->CreateFixture(&m_fixtureDef);
 	for(b2Fixture* fix = body->GetFixtureList(); fix; fix=fix->GetNext()) {
 		CCLog("TESTING FIXTURE:");
 		b2Shape::Type shapeType = fix->GetType();
@@ -99,13 +118,27 @@ void Prototype::testBreakBody(b2Body* body, const CCPoint touchPoint, const floa
 		for(int i=0; i<shape->GetVertexCount(); i++) {
 			b2Vec2 vert = shape->GetVertex(i);
 			b2Vec2 wp = body->GetWorldPoint(vert);
-			bool pointIn = bomb->TestPoint(wp);
-			CCLog("\tVertex %d: (%f, %f)  :  %d", i, wp.x, wp.y, pointIn); 
+//			bool pointIn = bomb->TestPoint(wp);
+			CCLog("\tVertex %d: (%f, %f)", i, wp.x, wp.y); 
 		}
 	}	
-
 }
 
+vector<b2Vec2>* Prototype::generateBlastShape(float radius) {
+    vector<b2Vec2>* vec = new vector<b2Vec2>();
+	vec->push_back(b2Vec2(-0.9f, -0.5f));
+	vec->push_back(b2Vec2(-1.7f, -1.35f));
+	vec->push_back(b2Vec2(1.3f, -2.7f));
+	vec->push_back(b2Vec2(1.1f, -1.2f));
+	vec->push_back(b2Vec2(0.0f, -1.0f));
+
+	//vec->push_back(b2Vec2(2.6f, 0));
+	//vec->push_back(b2Vec2(1.4f, 2.0f));
+	//vec->push_back(b2Vec2(0, 1.3f));
+	//vec->push_back(b2Vec2(-2.0f, 1.0f));
+
+	return vec;
+}
 
 CCPoint Prototype::touchToPoint(CCTouch* pTouch) {
     return CCDirector::sharedDirector()->convertToGL(pTouch->getLocationInView());
@@ -119,7 +152,7 @@ void Prototype::ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent) {
 		sprite = getPhysicsSpriteAtXY(touchPoint);
 
 		if(sprite != NULL) {
-			testBreakBody(sprite->getPhysicsBody(), touchPoint, 1.5f );
+			testPlaceBomb(sprite->getPhysicsBody(), touchPoint, 1.5f );
 		}
 
     }
