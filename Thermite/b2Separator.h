@@ -81,4 +81,64 @@ private:
     float det( float x1, float y1, float x2, float y2, float x3, float y3);
 };
 
+class b2SeparatorException : public exception {
+public:
+  virtual const char* what() const throw()
+  {
+    return "b2Separator threw an exception";
+  }
+};
+
+class OverlappingLinesException : public b2SeparatorException { 
+public:
+  virtual const char* what() const throw()
+  {
+    return "Overlapping lines detected";
+  }
+};
+
+class WindingException : public b2SeparatorException { 
+public:
+  virtual const char* what() const throw()
+  {
+    return "Vertices not wound in CCW direction";
+  }
+};
+
+class OverlappingLinesAndWindingException : public b2SeparatorException { 
+public:
+  virtual const char* what() const throw()
+  {
+    return "Overlapping lines detected and vertices are not wound in a CCW direction";
+  }
+};
+
+class TooManyVerticesException : public b2SeparatorException {
+public:
+	int m_verts;
+
+	TooManyVerticesException(int verts) {
+		m_verts = verts;
+	}
+
+	virtual const char* what() const throw() {
+		return "Too many vertices defined";
+	}
+
+};
+
+class NotEnoughVerticesException : public b2SeparatorException {
+public:
+	int m_verts;
+
+	NotEnoughVerticesException(int verts) {
+		m_verts = verts;
+	}
+
+	virtual const char* what() const throw() {
+		return "Too few vertices defined";
+	}
+
+};
+
 #endif /* defined(__Thermite__b2Separator__) */

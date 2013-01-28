@@ -28,7 +28,7 @@ private:
 	void testSeparator();
 	void testPlaceBomb(b2Body* body, const CCPoint touchPoint, const float radius);
 	
-	vector<b2Vec2>* generateBlastShape(float radius);
+	vector<b2Vec2>* generateBlastShape(float radius, int segments=10, float roughness=0.25f);
 };
 
 
