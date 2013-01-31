@@ -1,8 +1,0 @@
-//
-// Prefix header for all source files of the 'Thermite' target in the 'Thermite' project
-//
-
-#ifdef __OBJC__
-	#import <Foundation/Foundation.h>
-	#import <UIKit/UIKit.h>
-#endif
