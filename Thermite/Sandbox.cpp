@@ -107,6 +107,7 @@ CCPoint Sandbox::touchToPoint(CCTouch* pTouch) {
 }
 
 void Sandbox::ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent) {
+/*
     for (auto it = pTouches->begin(); it != pTouches->end(); it++) {
         CCTouch* touch = dynamic_cast<CCTouch*>(*it);
 
@@ -118,6 +119,7 @@ void Sandbox::ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent) {
             }
         }
     }
+*/
 }
 
 void Sandbox::ccTouchesEnded(CCSet *pTouches, CCEvent *pEvent) {

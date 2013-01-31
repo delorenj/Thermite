@@ -33,7 +33,7 @@ public:
     void setPosition(b2Vec2 p);
     
 protected:
-    int Bomb::det(int x1, int y1, int x2, int y2, int x3, int y3); 
+    int det(int x1, int y1, int x2, int y2, int x3, int y3); 
     b2Vec2 m_position;
     int m_radius;
     static const int m_maxRadius = 50;

@@ -10,7 +10,7 @@
 #define Thermite_BuildingBlock_h
 
 #include "cocos2d.h"
-#include "Box2d.h"
+#include "Box2D.h"
 #include "PhysicsSprite.h"
 #include "CCBox2DLayer.h"
 #include "Bomb.h"

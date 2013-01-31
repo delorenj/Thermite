@@ -157,7 +157,8 @@ CCPoint Prototype::touchToPoint(CCTouch* pTouch) {
 
 void Prototype::ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent) {
 	PhysicsSprite* sprite;
-    for (auto it = pTouches->begin(); it != pTouches->end(); it++) {
+
+    for (CCSetIterator it = pTouches->begin(); it != pTouches->end(); it++) {
         CCTouch* touch = dynamic_cast<CCTouch*>(*it);
 		CCPoint touchPoint = touchToPoint(touch);
 		sprite = getPhysicsSpriteAtXY(touchPoint);
