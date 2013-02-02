@@ -10,6 +10,47 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\core\AppDelegate.h" />
+    <ClInclude Include="..\core\b2DebugDraw.h" />
+    <ClInclude Include="..\core\b2Separator.h" />
+    <ClInclude Include="..\core\Bomb.h" />
+    <ClInclude Include="..\core\BoxDebugLayer.h" />
+    <ClInclude Include="..\core\Breakable.h" />
+    <ClInclude Include="..\core\BuildingBlock.h" />
+    <ClInclude Include="..\core\CCBox2DLayer.h" />
+    <ClInclude Include="..\core\GLESDebugDraw.h" />
+    <ClInclude Include="..\core\GLESRender.h" />
+    <ClInclude Include="..\core\LegoBomb.h" />
+    <ClInclude Include="..\core\PhysicsSprite.h" />
+    <ClInclude Include="..\core\Prototype.h" />
+    <ClInclude Include="..\core\QueryCallback.h" />
+    <ClInclude Include="..\core\Sandbox.h" />
+    <ClInclude Include="main.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\core\AppDelegate.cpp" />
+    <ClCompile Include="..\core\b2DebugDraw.cpp" />
+    <ClCompile Include="..\core\b2Separator.cpp" />
+    <ClCompile Include="..\core\Bomb.cpp" />
+    <ClCompile Include="..\core\Breakable.cpp" />
+    <ClCompile Include="..\core\BuildingBlock.cpp" />
+    <ClCompile Include="..\core\CCBox2DLayer.cpp" />
+    <ClCompile Include="..\core\GLESDebugDraw.cpp" />
+    <ClCompile Include="..\core\LegoBomb.cpp" />
+    <ClCompile Include="..\core\PhysicsSprite.cpp" />
+    <ClCompile Include="..\core\Prototype.cpp" />
+    <ClCompile Include="..\core\Sandbox.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\core\BoxDebugLayer.mm" />
+    <None Include="..\core\GLESRender.mm" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Thermite.rc" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{446A75B9-ED68-4133-9B45-E01EBA1F5562}</ProjectGuid>
   </PropertyGroup>
@@ -40,7 +81,7 @@
     <OutDir>$(SolutionDir)$(Configuration).win32\</OutDir>
     <IntDir>$(Configuration).win32\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\include;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\base_nodes;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\kazmath\include;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\platform;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\platform\win32;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\platform\third_party\win32\OGLES;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\CocosDenshion;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\CocosDenshion\include;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\external\Box2D;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\external;C:\Users\Jarad\Documents\GitHub\Thermite\Thermite;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\include;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\base_nodes;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\kazmath\include;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\platform;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\platform\win32;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\cocos2dx\platform\third_party\win32\OGLES;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\CocosDenshion;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\CocosDenshion\include;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\external\Box2D;C:\Users\Jarad\cocos2d-2.0-x-2.0.4\external;C:\Users\Jarad\Documents\GitHub\Thermite\Thermite\core;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration).win32\</OutDir>
@@ -84,7 +125,8 @@
       <DllDataFileName />
     </Midl>
     <PostBuildEvent>
-      <Command>xcopy /Y /E "C:\Users\Jarad\Documents\GitHub\Thermite\Thermite\Resources" "C:\Users\Jarad\Documents\Visual Studio 2012\Projects\Thermite\Thermite\Resources"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -121,75 +163,6 @@
       <DllDataFileName />
     </Midl>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <Image Include="..\..\..\..\..\GitHub\Thermite\Thermite\Resources\SpriteSheets\retarded-block.gif" />
-    <Image Include="..\..\..\..\..\GitHub\Thermite\Thermite\Resources\square.png" />
-    <Image Include="..\Resources\CloseNormal.png" />
-    <Image Include="..\Resources\CloseSelected.png" />
-    <Image Include="..\Resources\farm_ville_facebook_games_backgrounds.jpg" />
-    <Image Include="..\Resources\HelloWorld.png" />
-    <Image Include="res\Thermite.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Thermite.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\b2DebugDraw.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\b2Separator.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\Bomb.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\BoxDebugLayer.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\Breakable.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\BuildingBlock.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\CCBox2DLayer.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\GLESDebugDraw.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\GLESRender.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\LegoBomb.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\PhysicsSprite.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\Prototype.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\QueryCallback.h" />
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\Sandbox.h" />
-    <ClInclude Include="..\Classes\AppDelegate.h" />
-    <ClInclude Include="main.h" />
-    <ClInclude Include="resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\b2DebugDraw.cpp" />
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\b2Separator.cpp" />
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\Bomb.cpp" />
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\Breakable.cpp" />
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\BuildingBlock.cpp" />
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\CCBox2DLayer.cpp" />
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\GLESDebugDraw.cpp" />
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\LegoBomb.cpp" />
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\PhysicsSprite.cpp" />
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\Prototype.cpp" />
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\Sandbox.cpp" />
-    <ClCompile Include="..\Classes\AppDelegate.cpp" />
-    <ClCompile Include="main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\cocos2d-2.0-x-2.0.4\cocos2dx\proj.win32\cocos2d.vcxproj">
-      <Project>{98a51ba8-fc3a-415b-ac8f-8c7bd464e93e}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\..\..\cocos2d-2.0-x-2.0.4\CocosDenshion\proj.win32\CocosDenshion.vcxproj">
-      <Project>{f8edd7fa-9a51-4e80-baeb-860825d2eac6}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\..\..\cocos2d-2.0-x-2.0.4\extensions\proj.win32\libExtensions.vcxproj">
-      <Project>{21b2c324-891f-48ea-ad1a-5ae13de12e28}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\..\..\cocos2d-2.0-x-2.0.4\external\Box2D\proj.win32\Box2D.vcxproj">
-      <Project>{929480e7-23c0-4df6-8456-096d71547116}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\..\..\GitHub\Thermite\Thermite\BoxDebugLayer.mm" />
-    <None Include="..\..\..\..\..\GitHub\Thermite\Thermite\GLESRender.mm" />
-    <None Include="..\..\..\..\..\GitHub\Thermite\Thermite\Prefix.pch" />
-    <None Include="..\Resources\bg.plist" />
-    <None Include="..\Resources\bg.pvr.ccz" />
-    <None Include="..\Resources\Thermite.plist" />
-    <None Include="..\Resources\Thermite.pvr.ccz" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

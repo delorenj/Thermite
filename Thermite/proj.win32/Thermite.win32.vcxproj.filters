@@ -15,148 +15,110 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\Thermite.ico">
-      <Filter>resource</Filter>
-    </Image>
-    <Image Include="..\Resources\CloseSelected.png">
-      <Filter>resource</Filter>
-    </Image>
-    <Image Include="..\Resources\CloseNormal.png">
-      <Filter>resource</Filter>
-    </Image>
-    <Image Include="..\Resources\HelloWorld.png">
-      <Filter>resource</Filter>
-    </Image>
-    <Image Include="..\..\..\..\..\GitHub\Thermite\Thermite\Resources\square.png">
-      <Filter>resource</Filter>
-    </Image>
-    <Image Include="..\..\..\..\..\GitHub\Thermite\Thermite\Resources\SpriteSheets\retarded-block.gif">
-      <Filter>resource</Filter>
-    </Image>
-    <Image Include="..\Resources\farm_ville_facebook_games_backgrounds.jpg">
-      <Filter>resource</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Thermite.rc">
-      <Filter>resource</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="resource.h">
+    <ClInclude Include="..\core\Sandbox.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\QueryCallback.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\Prototype.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\PhysicsSprite.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\LegoBomb.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\GLESRender.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\GLESDebugDraw.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\CCBox2DLayer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\BuildingBlock.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\Breakable.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\BoxDebugLayer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\Bomb.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\b2Separator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\b2DebugDraw.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\core\AppDelegate.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="main.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\Classes\AppDelegate.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\b2DebugDraw.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\b2Separator.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\Bomb.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\BoxDebugLayer.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\BuildingBlock.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\CCBox2DLayer.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\GLESDebugDraw.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\GLESRender.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\LegoBomb.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\PhysicsSprite.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\Sandbox.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\Breakable.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\Prototype.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\GitHub\Thermite\Thermite\QueryCallback.h">
+    <ClInclude Include="resource.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\core\AppDelegate.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\b2DebugDraw.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\b2Separator.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\Bomb.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\Breakable.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\BuildingBlock.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\CCBox2DLayer.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\GLESDebugDraw.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\LegoBomb.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\PhysicsSprite.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\Prototype.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\core\Sandbox.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Classes\AppDelegate.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\b2DebugDraw.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\b2Separator.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\Bomb.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\BuildingBlock.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\CCBox2DLayer.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\GLESDebugDraw.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\LegoBomb.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\PhysicsSprite.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\Sandbox.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\Breakable.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\GitHub\Thermite\Thermite\Prototype.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\..\GitHub\Thermite\Thermite\BoxDebugLayer.mm">
+    <None Include="..\core\BoxDebugLayer.mm">
       <Filter>source</Filter>
     </None>
-    <None Include="..\..\..\..\..\GitHub\Thermite\Thermite\GLESRender.mm">
+    <None Include="..\core\GLESRender.mm">
       <Filter>source</Filter>
     </None>
-    <None Include="..\..\..\..\..\GitHub\Thermite\Thermite\Prefix.pch">
-      <Filter>include</Filter>
-    </None>
-    <None Include="..\Resources\bg.plist">
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Thermite.rc">
       <Filter>resource</Filter>
-    </None>
-    <None Include="..\Resources\Thermite.plist">
-      <Filter>resource</Filter>
-    </None>
-    <None Include="..\Resources\Thermite.pvr.ccz">
-      <Filter>resource</Filter>
-    </None>
-    <None Include="..\Resources\bg.pvr.ccz">
-      <Filter>resource</Filter>
-    </None>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

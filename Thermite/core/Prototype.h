@@ -26,8 +26,9 @@ private:
 
 	void testSimple();
 	void testSeparator();
-	void testPlaceBomb(b2Body* body, const CCPoint touchPoint, const float radius);
-	
+	void testPlaceBomb(b2Body*, const CCPoint, const float);
+	b2Vec2 getCrossoverVertex(const b2Fixture&, const b2Vec2&, const b2Vec2&);
+
 	vector<b2Vec2>* generateBlastShape(float radius, int segments=10, float roughness=0.25f);
 };
 

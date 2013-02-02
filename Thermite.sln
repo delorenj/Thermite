@@ -9,13 +9,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Thermite.win32", "Thermite\
 		{F8EDD7FA-9A51-4E80-BAEB-860825D2EAC6} = {F8EDD7FA-9A51-4E80-BAEB-860825D2EAC6}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcocos2d", "..\..\..\..\cocos2d-2.0-x-2.0.4\cocos2dx\proj.win32\cocos2d.vcxproj", "{98A51BA8-FC3A-415B-AC8F-8C7BD464E93E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libBox2D", "..\..\..\cocos2d-2.0-x-2.0.4\external\Box2D\proj.win32\Box2D.vcxproj", "{929480E7-23C0-4DF6-8456-096D71547116}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libCocosDenshion", "..\..\..\..\cocos2d-2.0-x-2.0.4\CocosDenshion\proj.win32\CocosDenshion.vcxproj", "{F8EDD7FA-9A51-4E80-BAEB-860825D2EAC6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcocos2d", "..\..\..\cocos2d-2.0-x-2.0.4\cocos2dx\proj.win32\cocos2d.vcxproj", "{98A51BA8-FC3A-415B-AC8F-8C7BD464E93E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libBox2D", "..\..\..\..\cocos2d-2.0-x-2.0.4\external\Box2D\proj.win32\Box2D.vcxproj", "{929480E7-23C0-4DF6-8456-096D71547116}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libCocosDenshion", "..\..\..\cocos2d-2.0-x-2.0.4\CocosDenshion\proj.win32\CocosDenshion.vcxproj", "{F8EDD7FA-9A51-4E80-BAEB-860825D2EAC6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libExtensions", "..\..\..\..\cocos2d-2.0-x-2.0.4\extensions\proj.win32\libExtensions.vcxproj", "{21B2C324-891F-48EA-AD1A-5AE13DE12E28}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libExtensions", "..\..\..\cocos2d-2.0-x-2.0.4\extensions\proj.win32\libExtensions.vcxproj", "{21B2C324-891F-48EA-AD1A-5AE13DE12E28}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +27,10 @@ Global
 		{446A75B9-ED68-4133-9B45-E01EBA1F5562}.Debug|Win32.Build.0 = Debug|Win32
 		{446A75B9-ED68-4133-9B45-E01EBA1F5562}.Release|Win32.ActiveCfg = Release|Win32
 		{446A75B9-ED68-4133-9B45-E01EBA1F5562}.Release|Win32.Build.0 = Release|Win32
+		{929480E7-23C0-4DF6-8456-096D71547116}.Debug|Win32.ActiveCfg = Debug|Win32
+		{929480E7-23C0-4DF6-8456-096D71547116}.Debug|Win32.Build.0 = Debug|Win32
+		{929480E7-23C0-4DF6-8456-096D71547116}.Release|Win32.ActiveCfg = Release|Win32
+		{929480E7-23C0-4DF6-8456-096D71547116}.Release|Win32.Build.0 = Release|Win32
 		{98A51BA8-FC3A-415B-AC8F-8C7BD464E93E}.Debug|Win32.ActiveCfg = Debug|Win32
 		{98A51BA8-FC3A-415B-AC8F-8C7BD464E93E}.Debug|Win32.Build.0 = Debug|Win32
 		{98A51BA8-FC3A-415B-AC8F-8C7BD464E93E}.Release|Win32.ActiveCfg = Release|Win32
@@ -35,10 +39,6 @@ Global
 		{F8EDD7FA-9A51-4E80-BAEB-860825D2EAC6}.Debug|Win32.Build.0 = Debug|Win32
 		{F8EDD7FA-9A51-4E80-BAEB-860825D2EAC6}.Release|Win32.ActiveCfg = Release|Win32
 		{F8EDD7FA-9A51-4E80-BAEB-860825D2EAC6}.Release|Win32.Build.0 = Release|Win32
-		{929480E7-23C0-4DF6-8456-096D71547116}.Debug|Win32.ActiveCfg = Debug|Win32
-		{929480E7-23C0-4DF6-8456-096D71547116}.Debug|Win32.Build.0 = Debug|Win32
-		{929480E7-23C0-4DF6-8456-096D71547116}.Release|Win32.ActiveCfg = Release|Win32
-		{929480E7-23C0-4DF6-8456-096D71547116}.Release|Win32.Build.0 = Release|Win32
 		{21B2C324-891F-48EA-AD1A-5AE13DE12E28}.Debug|Win32.ActiveCfg = Debug|Win32
 		{21B2C324-891F-48EA-AD1A-5AE13DE12E28}.Debug|Win32.Build.0 = Debug|Win32
 		{21B2C324-891F-48EA-AD1A-5AE13DE12E28}.Release|Win32.ActiveCfg = Release|Win32

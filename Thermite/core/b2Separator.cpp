@@ -9,7 +9,7 @@
 #include "b2Separator.h"
 #define MAX_VALUE 2147483647
 
-void b2Separator::Separate(b2Body* pBody, b2FixtureDef* pFixtureDef, vector<b2Vec2>* pVerticesVec, int scale) {
+void b2Separator::Separate(b2Body* pBody, b2FixtureDef* pFixtureDef, vector<b2Vec2>* pVerticesVec, int scale) throw(b2SeparatorException) {
     int i, n=pVerticesVec->size(), j, m;
     vector<b2Vec2> vec;
     b2Vec2 *vertices;
