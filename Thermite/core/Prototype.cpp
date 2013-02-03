@@ -51,7 +51,7 @@ void Prototype::testSeparator() {
     vec->push_back(b2Vec2(0, 4));
 	vec->push_back(b2Vec2(-4, 4));
 
-	Breakable* pStruct = new Breakable(static_cast<CCBox2DLayer*>(this), *vec, m_centerPoint.x-300, m_centerPoint.y, false);
+	Breakable* pStruct = new Breakable(static_cast<CCBox2DLayer*>(this), *vec, m_centerPoint.x-150, m_centerPoint.y+300, false);
 
 }
 
