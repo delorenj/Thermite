@@ -13,15 +13,19 @@ class Bomb;
 
 class Breakable {
 public:
-    Breakable(CCBox2DLayer*, const char*, float, float);
+    Breakable(CCBox2DLayer* ctx, float w, float h, float x, float y, bool structure=true);
+	Breakable(CCBox2DLayer* ctx, const vector<b2Vec2>& shape, float x, float y, bool structure=true);
     ~Breakable();
-    bool isTouching(cocos2d::CCPoint p);
-    void applyBomb(cocos2d::CCPoint p, Bomb* bomb);
-    CCBox2DLayer* getContext();
+    bool isTouching(const cocos2d::CCPoint p) const;
+	bool isStructure() const;
+	void setStructure(const bool val);
+    void applyBomb(const cocos2d::CCPoint p, Bomb& bomb);
+    CCBox2DLayer* getContext() const;
     
 private:
 	PhysicsSprite* m_pPhysicsSprite;
 	cocos2d::CCTexture2D* m_pSpriteTexture;
     CCBox2DLayer* m_pCtx;
+	vector<b2Vec2>* m_pHull;
 };
 #endif

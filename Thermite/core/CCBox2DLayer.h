@@ -25,6 +25,7 @@ public:
     
     b2World* getWorld();
 	PhysicsSprite* getPhysicsSpriteAtXY(const cocos2d::CCPoint);
+	void addSprite(PhysicsSprite& sprite);
 
 protected:
     b2World* initWorld();
@@ -33,7 +34,7 @@ protected:
     
     b2World* m_pWorld;
     b2DebugDraw* m_pDebugDraw;
-	map<int, PhysicsSprite*> m_sprites;
+	list<PhysicsSprite*> m_sprites;
 
 };
 

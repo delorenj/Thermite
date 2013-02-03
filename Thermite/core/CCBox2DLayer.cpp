@@ -15,7 +15,9 @@ CCBox2DLayer::CCBox2DLayer() {
 }
 
 CCBox2DLayer::~CCBox2DLayer() {
-
+	for(list<PhysicsSprite*>::iterator it = m_sprites.begin(); it != m_sprites.end(); it++) {
+		delete *it;
+	}
 }
 
 b2World* CCBox2DLayer::getWorld() {
@@ -119,3 +121,8 @@ PhysicsSprite* CCBox2DLayer::getPhysicsSpriteAtXY(const CCPoint coordinate) {
 			return NULL;
 		}
 }
+
+void CCBox2DLayer::addSprite(PhysicsSprite& sprite) {
+	m_sprites.push_back(&sprite);
+}
+

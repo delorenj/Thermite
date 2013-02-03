@@ -38,25 +38,11 @@ CCScene* Prototype::scene() {
 }
 
 void Prototype::testSimple() {
-	b2PolygonShape shape;
-	m_bodyDef.position.Set(m_centerPoint.x/PTM_RATIO, m_centerPoint.y/PTM_RATIO);
-	b2Body* body = getWorld()->CreateBody(&m_bodyDef);
-	shape.SetAsBox(4, 4);
-	m_fixtureDef.shape = &shape;
-	body->CreateFixture(&m_fixtureDef);
-
-//	Only need below to attach box2d body to a cocos2d sprite...
-	PhysicsSprite* ps = new PhysicsSprite();
-	ps->setTag(1);
-    ps->setPosition( CCPointMake( m_centerPoint.x+300, m_centerPoint.y ) );
-    ps->setPhysicsBody(body);
-	body->SetUserData(ps);
-	m_sprites[ps->getTag()] = ps;
-
+	Breakable* pStruct = new Breakable(static_cast<CCBox2DLayer*>(this), 256, 256, m_centerPoint.x, m_centerPoint.y, true);
 }
 
 void Prototype::testSeparator() {
-	b2Separator sep;
+
     vector<b2Vec2>* vec = new vector<b2Vec2>();
     vec->push_back(b2Vec2(-4, -4));
     vec->push_back(b2Vec2(4, -4));
@@ -65,22 +51,8 @@ void Prototype::testSeparator() {
     vec->push_back(b2Vec2(0, 4));
 	vec->push_back(b2Vec2(-4, 4));
 
-	m_bodyDef.position.Set((m_centerPoint.x-300)/PTM_RATIO, m_centerPoint.y/PTM_RATIO);
-	b2Body* body = getWorld()->CreateBody(&m_bodyDef);
-	try {
-		sep.Separate(body, &m_fixtureDef, vec, PTM_RATIO);
-	} catch(b2SeparatorException& e) {
-		CCLog("b2Separator Exception: %s", e.what());
-	}
+	Breakable* pStruct = new Breakable(static_cast<CCBox2DLayer*>(this), *vec, m_centerPoint.x-300, m_centerPoint.y, false);
 
-
-	//	Only need below to attach box2d body to a cocos2d sprite...
-	PhysicsSprite* ps = new PhysicsSprite();
-	ps->setTag(2);
-    ps->setPosition( CCPointMake( m_centerPoint.x+300, m_centerPoint.y ) );
-    ps->setPhysicsBody(body);
-	body->SetUserData(ps);
-	m_sprites[ps->getTag()] = ps;
 }
 
 void Prototype::testPlaceBomb(b2Body* body, const CCPoint touchPoint, const float radius) {
@@ -261,7 +233,7 @@ b2Vec2 Prototype::getCrossoverVertex(const b2Fixture& fixture, const b2Vec2& p1,
 
     if (!fixture.RayCast(&output, input, 0)) {
        CCLog("No intersection found...This should not have happened.");
-	   throw(new exception());
+	   throw exception();
 	}
 
     if (closestFraction > output.fraction)
@@ -299,7 +271,7 @@ void Prototype::ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent) {
 		sprite = getPhysicsSpriteAtXY(touchPoint);
 
 		if(sprite != NULL) {
-			testPlaceBomb(sprite->getPhysicsBody(), touchPoint, 1.75f );
+//			testPlaceBomb(sprite->getPhysicsBody(), touchPoint, 1.75f );
 		}
 
     }

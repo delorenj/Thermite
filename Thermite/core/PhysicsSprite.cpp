@@ -16,6 +16,12 @@ PhysicsSprite::PhysicsSprite()
     
 }
 
+PhysicsSprite::~PhysicsSprite() {
+	if(m_pBody) {
+		m_pBody->GetWorld()->DestroyBody(m_pBody);
+	}
+}
+
 void PhysicsSprite::setPhysicsBody(b2Body * body)
 {
     m_pBody = body;

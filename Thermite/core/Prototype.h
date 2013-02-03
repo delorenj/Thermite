@@ -3,6 +3,7 @@
 #include "cocos2d.h"
 #include "CCBox2DLayer.h"
 #include "PhysicsSprite.h"
+#include "Breakable.h"
 
 using namespace cocos2d;
 

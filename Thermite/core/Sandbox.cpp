@@ -48,7 +48,7 @@ CCScene* Sandbox::scene() {
 void Sandbox::initBreakables() {
     CCSize s = CCDirector::sharedDirector()->getWinSize();
 
-    m_pBreakables.push_front(new Breakable(this, "square.png", s.width/2, s.height/2));
+//    m_pBreakables.push_front(new Breakable(this, "square.png", s.width/2, s.height/2));
 }
 
 void Sandbox::initB2SeparatorExample() {

@@ -27,10 +27,10 @@ void b2Separator::Separate(b2Body* pBody, b2FixtureDef* pFixtureDef, vector<b2Ve
         vec = figsVec[i];
         m = vec.size();
 		if(m > b2_maxPolygonVertices) {
-			throw(new TooManyVerticesException(m));
+			throw TooManyVerticesException(m);
 		}
 		if(m < 3) {
-			throw(new NotEnoughVerticesException(m));
+			throw NotEnoughVerticesException(m);
 		}
 
         vertices = new b2Vec2[m];
