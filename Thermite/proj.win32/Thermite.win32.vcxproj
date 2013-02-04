@@ -22,6 +22,7 @@
     <ClInclude Include="..\core\GLESDebugDraw.h" />
     <ClInclude Include="..\core\GLESRender.h" />
     <ClInclude Include="..\core\LegoBomb.h" />
+    <ClInclude Include="..\core\NonConvexHull.h" />
     <ClInclude Include="..\core\PhysicsSprite.h" />
     <ClInclude Include="..\core\Prototype.h" />
     <ClInclude Include="..\core\QueryCallback.h" />
@@ -39,6 +40,7 @@
     <ClCompile Include="..\core\CCBox2DLayer.cpp" />
     <ClCompile Include="..\core\GLESDebugDraw.cpp" />
     <ClCompile Include="..\core\LegoBomb.cpp" />
+    <ClCompile Include="..\core\NonConvexHull.cpp" />
     <ClCompile Include="..\core\PhysicsSprite.cpp" />
     <ClCompile Include="..\core\Prototype.cpp" />
     <ClCompile Include="..\core\Sandbox.cpp" />

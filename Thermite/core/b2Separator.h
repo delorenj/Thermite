@@ -13,6 +13,7 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
+#include <forward_list>
 
 
 /*
@@ -53,6 +54,7 @@ public:
 		 **/
         
     void Separate(b2Body* pBody, b2FixtureDef* pFixtureDef, vector<b2Vec2>* pVerticesVec, int scale);
+    void Separate(b2Body* pBody, b2FixtureDef* pFixtureDef, forward_list<b2Vec2>& pVerticesList, int scale);
 		/**
 		 * Checks whether the vertices in <code>verticesVec</code> can be properly distributed into the new fixtures (more specifically, it makes sure there are no overlapping segments and the vertices are in clockwise order).
 		 * It is recommended that you use this method for debugging only, because it may cost more CPU usage.

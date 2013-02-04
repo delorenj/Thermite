@@ -43,7 +43,19 @@ void b2Separator::Separate(b2Body* pBody, b2FixtureDef* pFixtureDef, vector<b2Ve
         pBody->CreateFixture(pFixtureDef); 
     }
 }
-		/**
+
+void b2Separator::Separate(b2Body* pBody, b2FixtureDef* pFixtureDef, forward_list<b2Vec2>& pVerticesList, int scale) throw(b2SeparatorException) {
+	vector<b2Vec2>* pVerticesVec = new vector<b2Vec2>();
+
+	for(forward_list<b2Vec2>::iterator it = pVerticesList.begin(); it != pVerticesList.end(); it++) {
+		pVerticesVec->push_back(*it);
+	}
+
+	Separate(pBody, pFixtureDef, pVerticesVec, scale);
+
+	delete pVerticesVec;
+}
+/**
 		 * Checks whether the vertices in can be properly distributed into the new fixtures (more specifically, it makes sure there are no overlapping segments and the vertices are in clockwise order). 
 		 * It is recommended that you use this method for debugging only, because it may cost more CPU usage.
 		 * @param verticesVec The vertices to be validated.

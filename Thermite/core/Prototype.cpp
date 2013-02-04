@@ -237,7 +237,7 @@ b2Vec2 Prototype::getCrossoverVertex(const b2Fixture& fixture, const b2Vec2& p1,
 	}
 
     if (closestFraction > output.fraction)
-        closestFraction = output.fraction;
+        closestFraction = output.fraction; 
 
     b2Vec2 hitPoint = input.p1 + closestFraction * (input.p2 - input.p1);
     return hitPoint;
