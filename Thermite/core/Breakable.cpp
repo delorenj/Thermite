@@ -79,5 +79,17 @@ bool Breakable::isTouching(const cocos2d::CCPoint p) const{
     return m_pPhysicsSprite->boundingBox().containsPoint(p);
 }
 
-void Breakable::applyBomb(Bomb& bomb) {    
+void Breakable::applyBomb(Bomb& bomb) {
+	//	Breakable structure will split into 2 or more Breakables:
+	//		1 Structure
+	//		1+ Broken piece(s)
+	//
+	//	The outcome of the above result will depend on the number of crossover vertices between
+	//	bomb and structure:
+	//		2 crossovers = 1 structure, 1 broken piece
+	//		4 crossovers = 1 structure, 2 broken pieces
+	//		2^n crossovers = 1 structure, n broken pieces
+	//
+	// (above comment only applies to the current bomb types implemented. The above may change)
+
 }
