@@ -29,6 +29,7 @@
     <ClInclude Include="..\core\Sandbox.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SimpleBomb.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\core\AppDelegate.cpp" />
@@ -45,6 +46,7 @@
     <ClCompile Include="..\core\Prototype.cpp" />
     <ClCompile Include="..\core\Sandbox.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SimpleBomb.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\core\BoxDebugLayer.mm" />

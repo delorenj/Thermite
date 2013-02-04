@@ -28,8 +28,9 @@ Breakable::Breakable(CCBox2DLayer* ctx, float w, float h, float x, float y, bool
     
     b2Body* body = m_pCtx->getWorld()->CreateBody(&bodyDef);
     body->CreateFixture(&fixtureDef);
-    body->SetUserData(this);
+    body->SetUserData(m_pPhysicsSprite);
 	m_pPhysicsSprite->setPhysicsBody(body);
+	m_pPhysicsSprite->SetUserData(this);
 	m_pCtx->addSprite(*m_pPhysicsSprite);
 }
 
@@ -37,12 +38,7 @@ Breakable::Breakable(CCBox2DLayer* ctx, vector<b2Vec2>& shape, float x, float y,
 {
     m_pCtx = ctx;
 
-	m_pHull = new forward_list<b2Vec2>();
-
-	auto currVer = m_pHull->before_begin();
-	for(vector<b2Vec2>::iterator it = shape.begin(); it != shape.end(); it++) {
-		currVer = m_pHull->emplace_after(currVer, *it);
-	}
+	m_pHull = new NonConvexHull(shape);
 
     b2BodyDef bodyDef;
     m_pPhysicsSprite = new PhysicsSprite();
@@ -62,9 +58,10 @@ Breakable::Breakable(CCBox2DLayer* ctx, vector<b2Vec2>& shape, float x, float y,
     
     b2Body* body = m_pCtx->getWorld()->CreateBody(&bodyDef);
 	b2Separator sep;
-	sep.Separate(body, &fixtureDef, *m_pHull, PTM_RATIO);
-    body->SetUserData(this);
+	sep.Separate(body, &fixtureDef, m_pHull->getVertices(), PTM_RATIO);
+    body->SetUserData(m_pPhysicsSprite);
 	m_pPhysicsSprite->setPhysicsBody(body);
+	m_pPhysicsSprite->SetUserData(this);
 	m_pCtx->addSprite(*m_pPhysicsSprite);
 }
 
@@ -72,6 +69,7 @@ Breakable::~Breakable()
 {
 	delete m_pPhysicsSprite;
 }
+
 
 CCBox2DLayer* Breakable::getContext() const {
     return m_pCtx;
@@ -81,5 +79,5 @@ bool Breakable::isTouching(const cocos2d::CCPoint p) const{
     return m_pPhysicsSprite->boundingBox().containsPoint(p);
 }
 
-void Breakable::applyBomb(cocos2d::CCPoint p, Bomb& bomb) {    
+void Breakable::applyBomb(Bomb& bomb) {    
 }

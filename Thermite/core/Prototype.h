@@ -4,6 +4,7 @@
 #include "CCBox2DLayer.h"
 #include "PhysicsSprite.h"
 #include "Breakable.h"
+#include "SimpleBomb.h"
 
 using namespace cocos2d;
 

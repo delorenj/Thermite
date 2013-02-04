@@ -12,9 +12,7 @@
 #include "cocos2d.h"
 #include "Box2D.h"
 #include "Bomb.h"
-#include "BuildingBlock.h"
-
-class BuildingBlock;
+#include "NonConvexHull.h"
 
 class Bomb {
 
@@ -23,8 +21,6 @@ public:
     ~Bomb();
     
     virtual const char* getName() = 0;
-    virtual void subdivide(b2Body*, vector<vector<b2Vec2>* >&) = 0;
-
     int getRadius();
     int setRadius(int radius);
     int getMaxRadius();
@@ -34,8 +30,15 @@ public:
     
 protected:
     int det(int x1, int y1, int x2, int y2, int x3, int y3); 
+	virtual void generateBlastShape(float radius, int segments, float roughness);
+	b2Vec2 getCrossoverVertex(const b2Fixture& fixture, const b2Vec2& p1, const b2Vec2& p2);
+
+	b2FixtureDef m_fixtureDef;
+	b2BodyDef m_bodyDef;
     b2Vec2 m_position;
     int m_radius;
+	NonConvexHull* m_pForwardHull;
+	NonConvexHull* m_pReverseHull;
     static const int m_maxRadius = 50;
     static const int m_energy = 1000;
 };

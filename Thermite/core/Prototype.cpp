@@ -38,20 +38,19 @@ CCScene* Prototype::scene() {
 }
 
 void Prototype::testSimple() {
-	Breakable* pStruct = new Breakable(static_cast<CCBox2DLayer*>(this), 256, 256, m_centerPoint.x, m_centerPoint.y, true);
+	Breakable* pStruct = new Breakable(static_cast<CCBox2DLayer*>(this), 256, 256, m_centerPoint.x+150, m_centerPoint.y+100, false);
 }
 
 void Prototype::testSeparator() {
 
     vector<b2Vec2>* vec = new vector<b2Vec2>();
-    vec->push_back(b2Vec2(-4, -4));
-    vec->push_back(b2Vec2(4, -4));
-    vec->push_back(b2Vec2(4, 0));
+    vec->push_back(b2Vec2(4, 4));
+    vec->push_back(b2Vec2(-4, 4));
+    vec->push_back(b2Vec2(-4, 0));
     vec->push_back(b2Vec2(0, 0));
-    vec->push_back(b2Vec2(0, 4));
-	vec->push_back(b2Vec2(-4, 4));
+    vec->push_back(b2Vec2(4, -4));
 
-	Breakable* pStruct = new Breakable(static_cast<CCBox2DLayer*>(this), *vec, m_centerPoint.x-150, m_centerPoint.y+300, false);
+	Breakable* pStruct = new Breakable(static_cast<CCBox2DLayer*>(this), *vec, m_centerPoint.x-150, m_centerPoint.y, true);
 
 }
 
@@ -85,7 +84,7 @@ void Prototype::testPlaceBomb(b2Body* body, const CCPoint touchPoint, const floa
 			CCLog("b2Separator Exception: %s", e.what());
 		}
 
-		for(int i=0; i<bombShape->size(); i++) {
+		for(unsigned int i=0; i<bombShape->size(); i++) {
 			bombShape->at(i).x += localPoint.x;
 			bombShape->at(i).y += localPoint.y;
 		}
@@ -272,6 +271,12 @@ void Prototype::ccTouchesBegan(CCSet *pTouches, CCEvent *pEvent) {
 
 		if(sprite != NULL) {
 //			testPlaceBomb(sprite->getPhysicsBody(), touchPoint, 1.75f );
+			Breakable* structure = static_cast<Breakable*>(sprite->GetUserData());
+			b2Vec2 worldPoint =  b2Vec2(touchPoint.x/PTM_RATIO, touchPoint.y/PTM_RATIO);
+			b2Vec2 localPoint = sprite->getPhysicsBody()->GetLocalPoint(worldPoint);
+			Bomb* bomb = new SimpleBomb(1.5);
+			bomb->setPosition(localPoint);
+			structure->applyBomb(*bomb);
 		}
 
     }

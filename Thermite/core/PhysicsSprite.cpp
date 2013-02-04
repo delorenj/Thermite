@@ -27,6 +27,10 @@ void PhysicsSprite::setPhysicsBody(b2Body * body)
     m_pBody = body;
 }
 
+void PhysicsSprite::SetUserData(void* data) {
+	m_pUserData = data;
+}
+
 b2Body* PhysicsSprite::getPhysicsBody() {
     return m_pBody;
 }

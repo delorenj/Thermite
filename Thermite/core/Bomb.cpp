@@ -9,12 +9,64 @@
 #include "Bomb.h"
 
 Bomb::Bomb() {
+	m_bodyDef.type = b2_dynamicBody;
+	m_fixtureDef.isSensor = true;
+    m_fixtureDef.restitution = 0.4f;
+    m_fixtureDef.friction = 0.2f;
+    m_fixtureDef.density = 4;
 
 }
 
 Bomb::~Bomb() {
-    
+    if(m_pForwardHull) {
+		delete m_pForwardHull;
+	}
+
+	if(m_pReverseHull) {
+		delete m_pReverseHull;
+	}
 }
+
+void Bomb::generateBlastShape(float radius, int segments, float roughness) {
+    vector<b2Vec2>* vec = new vector<b2Vec2>();
+	float delta = 2.0f*b2_pi / segments;
+	float radius_threshold = radius * roughness;
+	float theta = 0;
+	for(int i=0; i<segments; i++, theta+=delta) {
+		float x,y,r;
+		r = radius + CCRANDOM_MINUS1_1()*radius_threshold;
+		x = r*cos(theta);
+		y = r*sin(theta);
+		vec->push_back(b2Vec2(x, y));
+	}
+	
+	m_pForwardHull = new NonConvexHull(*vec);
+	reverse(vec->begin(), vec->end());
+	m_pReverseHull = new NonConvexHull(*vec);
+
+}
+
+b2Vec2 Bomb::getCrossoverVertex(const b2Fixture& fixture, const b2Vec2& p1, const b2Vec2& p2) {
+    b2RayCastInput input;
+    input.p1 = p1;
+    input.p2 = p2;
+    input.maxFraction = 1;
+    float closestFraction = 1;
+    bool intersected = false;
+    b2RayCastOutput output;
+
+    if (!fixture.RayCast(&output, input, 0)) {
+       cocos2d::CCLog("No intersection found...This should not have happened.");
+	   throw exception();
+	}
+
+    if (closestFraction > output.fraction)
+        closestFraction = output.fraction; 
+
+    b2Vec2 hitPoint = input.p1 + closestFraction * (input.p2 - input.p1);
+    return hitPoint;
+}
+
 
 int Bomb::getRadius() {
     return m_radius;

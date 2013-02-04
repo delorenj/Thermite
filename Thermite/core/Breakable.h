@@ -8,7 +8,7 @@
 #include "CCBox2DLayer.h"
 #include "Bomb.h"
 #include "b2Separator.h"
-#include "forward_list"
+#include "NonConvexHull.h"
 
 class Bomb;
 
@@ -20,13 +20,15 @@ public:
     bool isTouching(const cocos2d::CCPoint p) const;
 	bool isStructure() const;
 	void setStructure(const bool val);
-    void applyBomb(const cocos2d::CCPoint p, Bomb& bomb);
+    void applyBomb(Bomb& bomb);
     CCBox2DLayer* getContext() const;
+	PhysicsSprite* getPhysicsSprite() { return m_pPhysicsSprite; }
     
 private:
+	void setBodyUserData() { m_pPhysicsSprite->getPhysicsBody()->SetUserData(this); }
 	PhysicsSprite* m_pPhysicsSprite;
 	cocos2d::CCTexture2D* m_pSpriteTexture;
     CCBox2DLayer* m_pCtx;
-	forward_list<b2Vec2>* m_pHull;
+	NonConvexHull* m_pHull;
 };
 #endif

@@ -24,8 +24,12 @@ public:
     b2Body* getPhysicsBody();
     virtual bool isDirty(void);
     virtual cocos2d::CCAffineTransform nodeToParentTransform(void);
+	void SetUserData(void* data);
+	void* GetUserData() { return m_pUserData; }
+
 private:
     b2Body* m_pBody;    // strong ref
+	void* m_pUserData;
 };
 
 
