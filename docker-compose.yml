@@ -1,0 +1,371 @@
+services:
+  # ===========================================
+  # Infrastructure Services
+  # ===========================================
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: thermite-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-thermite}
+      POSTGRES_USER: ${POSTGRES_USER:-thermite}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-thermite_dev_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-thermite}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - thermite-internal
+
+  redis:
+    image: redis:7-alpine
+    container_name: thermite-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - thermite-internal
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: thermite-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-thermite}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-thermite_dev_password}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - thermite-internal
+
+  traefik:
+    image: traefik:v2.10
+    container_name: thermite-traefik
+    restart: unless-stopped
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"  # Dev only - disable in production
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websocket.address=:9001"
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-INFO}"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "9001:9001"  # WebSocket for game server
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_certs:/letsencrypt
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - thermite-internal
+      - thermite-external
+
+  # ===========================================
+  # Backend Services (FastAPI/Python)
+  # ===========================================
+
+  matchmaking-service:
+    build:
+      context: ./services/matchmaking
+      dockerfile: Dockerfile
+    container_name: thermite-matchmaking
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-thermite}:${POSTGRES_PASSWORD:-thermite_dev_password}@postgres:5432/${POSTGRES_DB:-thermite}
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-thermite}:${RABBITMQ_PASSWORD:-thermite_dev_password}@rabbitmq:5672
+      SERVICE_PORT: 8002
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./services/matchmaking:/app
+      - logs_data:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - thermite-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.matchmaking.rule=PathPrefix(`/api/v1/queue`)"
+      - "traefik.http.services.matchmaking.loadbalancer.server.port=8002"
+      - "traefik.http.services.matchmaking.loadbalancer.healthcheck.path=/health"
+
+  persistence-service:
+    build:
+      context: ./services/stash-service  # Based on existing structure
+      dockerfile: Dockerfile
+    container_name: thermite-persistence
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-thermite}:${POSTGRES_PASSWORD:-thermite_dev_password}@postgres:5432/${POSTGRES_DB:-thermite}
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-thermite}:${RABBITMQ_PASSWORD:-thermite_dev_password}@rabbitmq:5672
+      SERVICE_PORT: 8003
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./services/stash-service:/app
+      - logs_data:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - thermite-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.persistence.rule=PathPrefix(`/api/v1/stash`, `/api/v1/players`, `/api/v1/matches`)"
+      - "traefik.http.services.persistence.loadbalancer.server.port=8003"
+      - "traefik.http.services.persistence.loadbalancer.healthcheck.path=/health"
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: thermite-auth
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-thermite}:${POSTGRES_PASSWORD:-thermite_dev_password}@postgres:5432/${POSTGRES_DB:-thermite}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev_jwt_secret_change_in_production}
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 1440  # 24 hours
+      SERVICE_PORT: 8004
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./services/auth-service:/app
+      - logs_data:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - thermite-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=PathPrefix(`/api/v1/auth`)"
+      - "traefik.http.services.auth.loadbalancer.server.port=8004"
+      - "traefik.http.services.auth.loadbalancer.healthcheck.path=/health"
+
+  match-orchestrator:
+    build:
+      context: ./services/match-orchestrator
+      dockerfile: Dockerfile
+    container_name: thermite-orchestrator
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-thermite}:${POSTGRES_PASSWORD:-thermite_dev_password}@postgres:5432/${POSTGRES_DB:-thermite}
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-thermite}:${RABBITMQ_PASSWORD:-thermite_dev_password}@rabbitmq:5672
+      SERVICE_PORT: 8005
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      GAME_SERVER_IMAGE: thermite/game-server:latest
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./services/match-orchestrator:/app
+      - /var/run/docker.sock:/var/run/docker.sock  # For spawning game server containers
+      - logs_data:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - thermite-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.orchestrator.rule=PathPrefix(`/api/v1/orchestrator`)"
+      - "traefik.http.services.orchestrator.loadbalancer.server.port=8005"
+
+  economy-service:
+    build:
+      context: ./services/economy-service
+      dockerfile: Dockerfile
+    container_name: thermite-economy
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-thermite}:${POSTGRES_PASSWORD:-thermite_dev_password}@postgres:5432/${POSTGRES_DB:-thermite}
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-thermite}:${RABBITMQ_PASSWORD:-thermite_dev_password}@rabbitmq:5672
+      SERVICE_PORT: 8006
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8006:8006"
+    volumes:
+      - ./services/economy-service:/app
+      - logs_data:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - thermite-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.economy.rule=PathPrefix(`/api/v1/shop`, `/api/v1/currency`)"
+      - "traefik.http.services.economy.loadbalancer.server.port=8006"
+
+  # ===========================================
+  # Game Services (Rust/Bevy)
+  # ===========================================
+
+  # Note: Game Server instances are spawned dynamically by Match Orchestrator
+  # This is a template/builder service for creating game server images
+  game-server-builder:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: builder
+    image: thermite/game-server:latest
+    container_name: thermite-game-server-builder
+    profiles:
+      - build  # Only run when explicitly requested
+    volumes:
+      - ./server:/app
+
+  # ===========================================
+  # Frontend Service (React/Vite)
+  # ===========================================
+
+  pre-raid-ui:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: thermite-pre-raid-ui
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: ${API_BASE_URL:-http://localhost}
+      VITE_WS_URL: ${WS_URL:-ws://localhost:9001}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+      - /app/node_modules  # Prevent overwriting node_modules
+    depends_on:
+      - auth-service
+      - persistence-service
+      - matchmaking-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - thermite-internal
+      - thermite-external
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ui.rule=PathPrefix(`/`)"
+      - "traefik.http.services.ui.loadbalancer.server.port=3000"
+
+  # ===========================================
+  # Observability (Optional - Future)
+  # ===========================================
+
+  # Loki and Grafana will be added in future iterations
+  # For MVP, rely on docker logs and structured logging
+
+# ===========================================
+# Networks
+# ===========================================
+
+networks:
+  thermite-internal:
+    driver: bridge
+    internal: false  # Allow internet access for package downloads
+  thermite-external:
+    driver: bridge
+
+# ===========================================
+# Volumes
+# ===========================================
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  traefik_certs:
+    driver: local
+  logs_data:
+    driver: local

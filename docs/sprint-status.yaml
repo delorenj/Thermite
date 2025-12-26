@@ -1,0 +1,250 @@
+version: "6.0.0"
+project_name: "Thermite"
+project_level: 4
+current_sprint: 1
+sprint_plan_path: "docs/sprint-plan-thermite-2025-12-26.md"
+
+sprints:
+  - sprint_number: 1
+    start_date: "2025-12-26"
+    end_date: "2026-01-09"
+    capacity_points: 30
+    committed_points: 29
+    completed_points: 3
+    status: "in_progress"
+    goal: "Establish production-ready infrastructure with deployed services, database schema, and map system foundation enabling development of game features"
+    stories:
+      - story_id: "STORY-000"
+        title: "Development Environment Setup"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-INF-001"
+        title: "Database Schema and Migrations"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-INF-002"
+        title: "Docker Compose Deployment Setup"
+        points: 3
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2025-12-26"
+      - story_id: "STORY-INF-003"
+        title: "CI/CD Pipeline with GitHub Actions"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-022"
+        title: "Persistent Stash Database Schema"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-028"
+        title: "Grid Map Data Structure and Validation"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-029"
+        title: "Map Template System with Procedural Variation"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 2
+    start_date: "2026-01-09"
+    end_date: "2026-01-23"
+    capacity_points: 30
+    committed_points: 26
+    completed_points: 0
+    status: "not_started"
+    goal: "Deliver playable combat prototype with movement, bombs, death mechanics, and real-time multiplayer synchronization"
+    stories:
+      - story_id: "STORY-001"
+        title: "Grid-Based Player Movement"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-002"
+        title: "Bomb Placement with Cooldown and Limits"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-003"
+        title: "Bomb Detonation Pattern and Collision"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-004"
+        title: "Player Health System and Damage Calculation"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-005"
+        title: "Death State Transition and Item Loss"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-006"
+        title: "Death Replay System with Kill Feed"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 3
+    start_date: "2026-01-23"
+    end_date: "2026-02-06"
+    capacity_points: 30
+    committed_points: 27
+    completed_points: 0
+    status: "not_started"
+    goal: "Enable complete economy loop: persistent stash, loadout customization, shop, and currency systems with economic floor enforcement"
+    stories:
+      - story_id: "STORY-023"
+        title: "Stash UI with Item Management"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-007"
+        title: "Pre-Raid Loadout Selection UI"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-008"
+        title: "Gear Stats Application to Player Entity"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-009"
+        title: "Visual Gear Rendering on Player Sprite"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-010"
+        title: "Starter Loadout for New Players"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-024"
+        title: "In-Game Shop System with Item Purchase"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-025"
+        title: "Currency System with Economic Floor"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 4
+    start_date: "2026-02-06"
+    end_date: "2026-02-20"
+    capacity_points: 30
+    committed_points: 27
+    completed_points: 0
+    status: "not_started"
+    goal: "Complete raid lifecycle from matchmaking through extraction with party formation, timer enforcement, and successful extraction rewards"
+    stories:
+      - story_id: "STORY-014"
+        title: "Matchmaking Queue with Party Formation"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-015"
+        title: "Raid Start with Player Spawn"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-016"
+        title: "Raid Timer Enforcement with UI Countdown"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-017"
+        title: "Extraction Zone Mechanics"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-018"
+        title: "Post-Raid Loot Transfer to Stash"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-019"
+        title: "Raid Failure Detection and Cleanup"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-026"
+        title: "Map Selection UI Before Matchmaking"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 5
+    start_date: "2026-02-20"
+    end_date: "2026-03-06"
+    capacity_points: 30
+    committed_points: 31
+    completed_points: 0
+    status: "not_started"
+    goal: "Polish and integrate final features: world loot spawning, extraction timer, death marker visibility, and map variations for complete MVP"
+    stories:
+      - story_id: "STORY-020"
+        title: "World Loot Spawning on Map"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-021"
+        title: "Loot Pickup Interaction System"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-011"
+        title: "Extraction Timer UI with Warning States"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-012"
+        title: "Death Marker and Body Persistence"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-013"
+        title: "Loot Visibility Rules (Own Gear vs World Loot)"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-027"
+        title: "Map Rotation System with Weighted Selection"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-030"
+        title: "Destructible Soft Block Grid Layer"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-031"
+        title: "Map Variation Seed System"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-032"
+        title: "Map Visual Rendering and Asset Integration"
+        points: 1
+        status: "not_started"
+        assigned_to: null
+
+velocity:
+  sprint_1: null
+  sprint_2: null
+  sprint_3: null
+  sprint_4: null
+  sprint_5: null
+  rolling_average: null
+
+team:
+  size: 1
+  sprint_length_weeks: 2
+  capacity_per_sprint: 30
