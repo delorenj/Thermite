@@ -16,8 +16,10 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.3.0",
+    "pytest-cov>=6.0.0",
     "httpx>=0.28.0",
     "ruff>=0.10.0",
+    "mypy>=1.14.0",
 ]
 
 [build-system]

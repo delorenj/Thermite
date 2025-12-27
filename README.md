@@ -1,5 +1,8 @@
 # Thermite
 
+[![CI/CD Pipeline](https://github.com/delorenj/Thermite/actions/workflows/ci.yml/badge.svg)](https://github.com/delorenj/Thermite/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/delorenj/Thermite/branch/main/graph/badge.svg)](https://codecov.io/gh/delorenj/Thermite)
+
 Grid-based tactical extraction shooter combining Bomberman-style combat mechanics with Tarkov-inspired risk/reward gameplay.
 
 ## Architecture
