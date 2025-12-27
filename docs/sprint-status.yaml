@@ -10,7 +10,7 @@ sprints:
     end_date: "2026-01-09"
     capacity_points: 30
     committed_points: 29
-    completed_points: 13
+    completed_points: 16
     status: "in_progress"
     goal: "Establish production-ready infrastructure with deployed services, database schema, and map system foundation enabling development of game features"
     stories:
@@ -45,8 +45,9 @@ sprints:
       - story_id: "STORY-028"
         title: "Grid Map Data Structure and Validation"
         points: 3
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2025-12-27"
       - story_id: "STORY-029"
         title: "Map Template System with Procedural Variation"
         points: 5

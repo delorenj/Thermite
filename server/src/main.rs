@@ -1,4 +1,5 @@
 mod database;
+pub mod map_system;
 
 use database::{init_database, verify_schema};
 
