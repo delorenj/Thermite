@@ -10,7 +10,7 @@ sprints:
     end_date: "2026-01-09"
     capacity_points: 30
     committed_points: 29
-    completed_points: 8
+    completed_points: 13
     status: "in_progress"
     goal: "Establish production-ready infrastructure with deployed services, database schema, and map system foundation enabling development of game features"
     stories:
@@ -34,8 +34,9 @@ sprints:
       - story_id: "STORY-INF-003"
         title: "CI/CD Pipeline with GitHub Actions"
         points: 5
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2025-12-26"
       - story_id: "STORY-022"
         title: "Persistent Stash Database Schema"
         points: 5
