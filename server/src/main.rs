@@ -1,7 +1,4 @@
-mod database;
-pub mod map_system;
-
-use database::{init_database, verify_schema};
+use thermite_server::database::{init_database, verify_schema};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
