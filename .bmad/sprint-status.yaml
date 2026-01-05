@@ -10,15 +10,16 @@ sprints:
     end_date: "2026-01-17"
     capacity_points: 30
     committed_points: 21
-    completed_points: 0
-    status: "not_started"
+    completed_points: 8
+    status: "in_progress"
     goal: "Establish infrastructure foundation and database layer"
     stories:
       - story_id: "STORY-INF-001"
         title: "Database Schema and Migrations"
         points: 8
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-05"
       - story_id: "STORY-INF-002"
         title: "Backend Service Scaffolding"
         points: 8
