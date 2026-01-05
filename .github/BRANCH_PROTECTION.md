@@ -1,85 +1,104 @@
-# Branch Protection Configuration
+# Branch Protection Rules
 
-This document describes the branch protection rules that should be configured in GitHub to ensure code quality and prevent broken builds from being merged.
+This document outlines the required branch protection settings for the Thermite project.
 
-## Required Branch Protection Rules
+## Main Branch Protection
 
-### For `main` branch:
+Navigate to: `Settings > Branches > Branch protection rules`
 
-1. **Require pull request reviews before merging**
-   - Required approving reviews: 1 (optional for solo developer)
-   - Dismiss stale pull request approvals when new commits are pushed: ✅
+### Required Settings for `main` branch:
 
-2. **Require status checks to pass before merging**
-   - Require branches to be up to date before merging: ✅
-   - Status checks that are required:
-     - `Rust Tests and Linting`
-     - `Python Tests and Linting`
-     - `Docker Image Builds`
-     - `Integration Check`
+**Protect matching branches:**
+- ✅ Require a pull request before merging
+  - ✅ Require approvals: 1
+  - ✅ Dismiss stale pull request approvals when new commits are pushed
+  - ✅ Require review from Code Owners (if CODEOWNERS file exists)
 
-3. **Require conversation resolution before merging**: ✅
+- ✅ Require status checks to pass before merging
+  - ✅ Require branches to be up to date before merging
+  - **Required status checks:**
+    - `Rust Tests and Linting`
+    - `Python Tests and Linting (auth-service)`
+    - `Python Tests and Linting (matchmaking-service)`
+    - `Python Tests and Linting (persistence-service)`
+    - `Python Tests and Linting (match-orchestrator)`
+    - `Docker Image Builds`
+    - `Integration Check`
 
-4. **Do not allow bypassing the above settings**: ✅
+- ✅ Require conversation resolution before merging
 
-5. **Restrict who can push to matching branches** (optional):
-   - Only allow specific people, teams, or apps to push: Configure as needed
+- ✅ Require linear history
 
-### For `develop` branch:
+- ✅ Include administrators (enforce rules for admins too)
 
-Same rules as `main` branch to ensure develop branch remains stable.
+## Develop Branch Protection
 
-## How to Configure
+### Required Settings for `develop` branch:
 
-1. Go to repository Settings → Branches
-2. Click "Add rule" under Branch protection rules
-3. Enter branch name pattern: `main`
-4. Enable the checkboxes listed above
-5. Under "Require status checks to pass before merging":
-   - Search for and select the CI job names listed above
-6. Click "Create" or "Save changes"
-7. Repeat for `develop` branch
+**Protect matching branches:**
+- ✅ Require a pull request before merging
+  - ✅ Require approvals: 0 (optional for develop)
 
-## Verification
+- ✅ Require status checks to pass before merging
+  - ✅ Require branches to be up to date before merging
+  - **Required status checks:**
+    - `Rust Tests and Linting`
+    - `Python Tests and Linting (auth-service)`
+    - `Python Tests and Linting (matchmaking-service)`
+    - `Python Tests and Linting (persistence-service)`
+    - `Python Tests and Linting (match-orchestrator)`
+    - `Docker Image Builds`
 
-After configuring:
-1. Create a test branch with intentionally failing tests
-2. Open a pull request to `main`
-3. Verify that the PR shows "Some checks were not successful"
-4. Verify that the "Merge" button is disabled
-5. Fix the tests
-6. Verify that the "Merge" button becomes enabled after all checks pass
+- ✅ Require linear history
 
-## CI/CD Pipeline Jobs
+## Coverage Requirements
 
-The following jobs are defined in `.github/workflows/ci.yml`:
+All code must meet minimum coverage thresholds:
 
-1. **rust-test**: Runs cargo test, clippy, and formatting checks
-2. **python-test**: Runs pytest with coverage, ruff linting, and formatting checks
-3. **docker-build**: Builds all Docker images to ensure Dockerfiles are valid
-4. **integration-check**: Final verification that all jobs passed
+- **Python services:** 80% minimum (enforced via `--cov-fail-under=80`)
+- **Rust game server:** 80% minimum (enforced via `--fail-under 80`)
 
-All jobs must pass for a PR to be mergeable when branch protection is enabled.
+Builds will fail if coverage drops below these thresholds.
+
+## Setting Up Branch Protection
+
+1. Go to repository Settings
+2. Navigate to "Branches" in the left sidebar
+3. Click "Add rule" or edit existing rule
+4. Enter branch name pattern: `main` or `develop`
+5. Enable all checkboxes listed above
+6. Select all required status checks from the dropdown
+7. Click "Create" or "Save changes"
 
 ## Codecov Integration
 
-Coverage reports are uploaded to Codecov. To enable:
+Coverage reports are automatically uploaded to Codecov on every push/PR:
 
-1. Sign up at https://codecov.io with your GitHub account
-2. Add the Thermite repository
-3. Copy the `CODECOV_TOKEN` from the Codecov dashboard
-4. Add it as a repository secret in GitHub:
-   - Settings → Secrets and variables → Actions → New repository secret
-   - Name: `CODECOV_TOKEN`
-   - Value: [paste token from Codecov]
+1. Sign up at https://codecov.io
+2. Add Thermite repository
+3. Add `CODECOV_TOKEN` to GitHub Secrets (Settings > Secrets and variables > Actions)
+4. Coverage badges and PR comments will be automatically generated
 
-Coverage badge will display on README.md once first workflow run completes with coverage data.
+## Required Secrets
 
-## Notes for Solo Developer
+Add these secrets in: `Settings > Secrets and variables > Actions`
 
-For a solo developer project, you may choose to:
-- Disable "Require pull request reviews" (since you're reviewing your own code)
-- Keep status checks required (maintains code quality)
-- Use PRs for feature branches to maintain good git hygiene
+**Required for deployment:**
+- `DEPLOY_HOST`: Production server IP/hostname
+- `DEPLOY_USER`: SSH username for deployment
+- `DEPLOY_SSH_KEY`: Private SSH key for deployment access
 
-However, all status checks should always be required to prevent regressions.
+**Optional for enhanced coverage reporting:**
+- `CODECOV_TOKEN`: Codecov API token for coverage reports
+
+## Troubleshooting
+
+**Status checks not appearing:**
+- Trigger a workflow run first (push a commit or open a PR)
+- Wait for workflows to complete at least once
+- Refresh the branch protection page
+
+**Coverage failing:**
+- Check individual service coverage reports in workflow logs
+- Run tests locally: `cd services/<service> && uv run pytest --cov`
+- Add more tests to increase coverage above 80%

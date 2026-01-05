@@ -59,6 +59,25 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/thermite_test
 
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin
+
+      - name: Run tests with coverage
+        run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml --output-dir ./coverage --fail-under 80
+        working-directory: ./server
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/thermite_test
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./server/coverage/cobertura.xml
+          flags: rust
+          name: rust-coverage
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
+
       - name: Build release
         run: cargo build --release --verbose
         working-directory: ./server
@@ -66,7 +85,23 @@ jobs:
   python-test:
     name: Python Tests and Linting
     runs-on: ubuntu-latest
-    
+
+    strategy:
+      matrix:
+        service:
+          - name: auth-service
+            path: ./services/auth-service
+            package: app
+          - name: matchmaking-service
+            path: ./services/matchmaking
+            package: app
+          - name: persistence-service
+            path: ./services/stash-service
+            package: thermite_stash_service
+          - name: match-orchestrator
+            path: ./services/match-orchestrator
+            package: app
+
     services:
       postgres:
         image: postgres:16
@@ -80,6 +115,26 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      rabbitmq:
+        image: rabbitmq:3.13-management-alpine
+        options: >-
+          --health-cmd "rabbitmq-diagnostics ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5672:5672
 
     steps:
       - name: Checkout code
@@ -97,34 +152,37 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml') }}
+          key: ${{ runner.os }}-uv-${{ matrix.service.name }}-${{ hashFiles(format('{0}/pyproject.toml', matrix.service.path)) }}
           restore-keys: |
+            ${{ runner.os }}-uv-${{ matrix.service.name }}-
             ${{ runner.os }}-uv-
 
       - name: Install dependencies
         run: uv sync --all-extras
-        working-directory: ./services/stash-service
+        working-directory: ${{ matrix.service.path }}
 
       - name: Run ruff linting
         run: uv run ruff check .
-        working-directory: ./services/stash-service
+        working-directory: ${{ matrix.service.path }}
 
       - name: Run ruff formatting check
         run: uv run ruff format --check .
-        working-directory: ./services/stash-service
+        working-directory: ${{ matrix.service.path }}
 
       - name: Run tests with coverage
-        run: uv run pytest --cov=thermite_stash_service --cov-report=xml --cov-report=term
-        working-directory: ./services/stash-service
+        run: uv run pytest --cov=${{ matrix.service.package }} --cov-report=xml --cov-report=term --cov-fail-under=80
+        working-directory: ${{ matrix.service.path }}
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/thermite_test
+          REDIS_URL: redis://localhost:6379
+          RABBITMQ_URL: amqp://guest:guest@localhost:5672
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
         with:
-          files: ./services/stash-service/coverage.xml
-          flags: python
-          name: python-coverage
+          files: ${{ matrix.service.path }}/coverage.xml
+          flags: python-${{ matrix.service.name }}
+          name: ${{ matrix.service.name }}-coverage
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true

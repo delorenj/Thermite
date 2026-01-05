@@ -1,0 +1,105 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service:
+          - name: auth-service
+            path: ./services/auth-service
+            dockerfile: ./services/auth-service/Dockerfile
+          - name: matchmaking-service
+            path: ./services/matchmaking
+            dockerfile: ./services/matchmaking/Dockerfile
+          - name: persistence-service
+            path: ./services/stash-service
+            dockerfile: ./services/stash-service/Dockerfile
+          - name: match-orchestrator
+            path: ./services/match-orchestrator
+            dockerfile: ./services/match-orchestrator/Dockerfile
+          - name: game-server
+            path: ./server
+            dockerfile: ./server/Dockerfile
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service.name }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.path }}
+          file: ${{ matrix.service.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service.name }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service.name }}:buildcache,mode=max
+
+  deploy:
+    name: Deploy via Docker Compose
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/thermite
+            git pull origin main
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker system prune -f
+
+      - name: Health check
+        run: |
+          echo "Waiting for services to be healthy..."
+          sleep 30
+          curl -f http://${{ secrets.DEPLOY_HOST }}:8004/health || exit 1
+          curl -f http://${{ secrets.DEPLOY_HOST }}:8002/health || exit 1
+          curl -f http://${{ secrets.DEPLOY_HOST }}:8003/health || exit 1
+          curl -f http://${{ secrets.DEPLOY_HOST }}:8005/health || exit 1
+          echo "All services are healthy!"
