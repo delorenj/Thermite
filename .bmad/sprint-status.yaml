@@ -1,0 +1,278 @@
+version: "6.0.0"
+project_name: "Thermite"
+project_level: 4
+current_sprint: 1
+sprint_plan_path: "docs/sprint-plan-thermite-2026-01-04.md"
+
+sprints:
+  - sprint_number: 1
+    start_date: "2026-01-06"
+    end_date: "2026-01-17"
+    capacity_points: 30
+    committed_points: 21
+    completed_points: 0
+    status: "not_started"
+    goal: "Establish infrastructure foundation and database layer"
+    stories:
+      - story_id: "STORY-INF-001"
+        title: "Database Schema and Migrations"
+        points: 8
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-INF-002"
+        title: "Backend Service Scaffolding"
+        points: 8
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-INF-003"
+        title: "CI/CD Pipeline"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 2
+    start_date: "2026-01-20"
+    end_date: "2026-01-31"
+    capacity_points: 30
+    committed_points: 29
+    completed_points: 0
+    status: "not_started"
+    goal: "Build map foundation and player movement mechanics"
+    stories:
+      - story_id: "STORY-001"
+        title: "Grid-Based Map Data Structure"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-029"
+        title: "Map Template System"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-032"
+        title: "Map Pathfinding Validation"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-033"
+        title: "Map Loading and Caching"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-002"
+        title: "Player Movement System"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-008"
+        title: "Game Client Rendering (Bevy)"
+        points: 8
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 3
+    start_date: "2026-02-03"
+    end_date: "2026-02-14"
+    capacity_points: 30
+    committed_points: 29
+    completed_points: 0
+    status: "not_started"
+    goal: "Implement core bomb combat system"
+    stories:
+      - story_id: "STORY-003"
+        title: "Bomb Placement Mechanic"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-004"
+        title: "Bomb Detonation and Blast Pattern"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-005"
+        title: "Player Health and Damage System"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-006"
+        title: "Death Handling and Item Loss"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-007"
+        title: "Death Feedback and Replay"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-019"
+        title: "Game Server Process Management"
+        points: 8
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 4
+    start_date: "2026-02-17"
+    end_date: "2026-02-28"
+    capacity_points: 30
+    committed_points: 28
+    completed_points: 0
+    status: "not_started"
+    goal: "Enable end-to-end raid flow from queue to extraction"
+    stories:
+      - story_id: "STORY-014"
+        title: "Raid Timer System"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-015"
+        title: "Extraction Points System"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-016"
+        title: "Successful Extraction Flow"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-017"
+        title: "Matchmaking Queue System"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-018"
+        title: "Match Lobby and Player Spawn"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-020"
+        title: "WebSocket Communication Protocol"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 5
+    start_date: "2026-03-03"
+    end_date: "2026-03-14"
+    capacity_points: 30
+    committed_points: 25
+    completed_points: 0
+    status: "not_started"
+    goal: "Enable pre-raid loadout customization and gear stats"
+    stories:
+      - story_id: "STORY-009"
+        title: "Stash View and Inventory Management"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-010"
+        title: "Pre-Raid Loadout Selection"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-011"
+        title: "Gear Stats Modification System"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-012"
+        title: "Visual Gear Identification"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-013"
+        title: "Trader/Shop System"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 6
+    start_date: "2026-03-17"
+    end_date: "2026-03-28"
+    capacity_points: 30
+    committed_points: 29
+    completed_points: 0
+    status: "not_started"
+    goal: "Implement loot spawns, collection, and economic loop"
+    stories:
+      - story_id: "STORY-021"
+        title: "Loot Spawn System"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-022"
+        title: "Loot Pickup Mechanic"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-023"
+        title: "Currency System"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-024"
+        title: "Loot Value and Sale System"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-026"
+        title: "Stash Persistence and ACID Guarantees"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-027"
+        title: "Match Results Processing"
+        points: 8
+        status: "not_started"
+        assigned_to: null
+
+  - sprint_number: 7
+    start_date: "2026-03-31"
+    end_date: "2026-04-11"
+    capacity_points: 30
+    committed_points: 23
+    completed_points: 0
+    status: "not_started"
+    goal: "Finalize MVP with economic tuning and quality-of-life features"
+    stories:
+      - story_id: "STORY-025"
+        title: "Economic Floor Calibration"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-028"
+        title: "Starter Loadout and Debt System"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-030"
+        title: "Map Zone System (Risk Tiers)"
+        points: 3
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-031"
+        title: "Destructible Blocks System"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+      - story_id: "STORY-034"
+        title: "Minimap and Map UI"
+        points: 5
+        status: "not_started"
+        assigned_to: null
+
+velocity:
+  sprint_1: null
+  sprint_2: null
+  sprint_3: null
+  sprint_4: null
+  sprint_5: null
+  sprint_6: null
+  sprint_7: null
+  rolling_average: null
+
+team:
+  size: 1
+  sprint_length_weeks: 2
+  capacity_per_sprint: 30
+  experience_level: "senior"
+  productive_hours_per_day: 6
