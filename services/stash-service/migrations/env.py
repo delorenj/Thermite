@@ -16,9 +16,25 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+import sys
+from pathlib import Path
+
+# Add the project root to sys.path to import the package
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Import models to register them with Base metadata
+from thermite_stash_service.database import Base
+from thermite_stash_service.models import (
+    Player,
+    Currency,
+    ItemDefinition,
+    StashItem,
+    Match,
+    MatchParticipant,
+    AuditLog,
+)
+
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
