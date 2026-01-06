@@ -74,8 +74,16 @@ sprints:
       - story_id: "STORY-033"
         title: "Map Loading and Caching"
         points: 3
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-06"
+        implementation_notes: |
+          MapCache struct with RwLock<HashMap<String, MapTemplate>> for thread-safe caching.
+          load_all_from_directory() scans /maps folder for JSON templates.
+          clone_for_match() generates independent Grid instances for each match.
+          Hot-reload support via reload() and reload_single() methods.
+          SharedMapCache type alias for Arc<MapCache> for async contexts.
+          13 unit tests for cache operations.
       - story_id: "STORY-002"
         title: "Player Movement System"
         points: 5
