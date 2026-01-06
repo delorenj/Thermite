@@ -1,7 +1,7 @@
 version: "6.0.0"
 project_name: "Thermite"
 project_level: 4
-current_sprint: 1
+current_sprint: 2
 sprint_plan_path: "docs/sprint-plan-thermite-2026-01-04.md"
 
 sprints:
@@ -38,25 +38,39 @@ sprints:
     end_date: "2026-01-31"
     capacity_points: 30
     committed_points: 29
-    completed_points: 0
-    status: "not_started"
+    completed_points: 13
+    status: "in_progress"
     goal: "Build map foundation and player movement mechanics"
     stories:
       - story_id: "STORY-001"
         title: "Grid-Based Map Data Structure"
         points: 5
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-06"
+        implementation_notes: |
+          Grid struct with Vec<Vec<Tile>> storage, Tile enum (Wall, Floor, Destructible, Loot, Extraction),
+          neighbors() and walkable_neighbors() methods, bounds checking, serialization support.
+          38 unit tests passing.
       - story_id: "STORY-029"
         title: "Map Template System"
         points: 5
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-06"
+        implementation_notes: |
+          MapTemplate struct with load_from_file(), Zone and LootTier system (Common, Uncommon, Rare),
+          procedural destructible block placement with variation_percentage (20-30%), deterministic
+          generation with optional seed. factory_01.json 20x20 template with 7 zones.
       - story_id: "STORY-032"
         title: "Map Pathfinding Validation"
         points: 3
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-06"
+        implementation_notes: |
+          BFS pathfinding validation ensures all spawn points can reach all extraction points.
+          Validates connectivity after procedural generation. Tests for blocked paths fail appropriately.
       - story_id: "STORY-033"
         title: "Map Loading and Caching"
         points: 3

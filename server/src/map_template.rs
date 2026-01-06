@@ -519,9 +519,98 @@ mod tests {
 
         let json = serde_json::to_string(&zone).unwrap();
         let deserialized: Zone = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(deserialized.id, "hot_center");
         assert_eq!(deserialized.loot_tier, LootTier::Rare);
         assert_eq!(deserialized.area.len(), 2);
+    }
+
+    #[test]
+    fn test_load_factory_01_template() {
+        // Load the factory_01.json template from the maps directory
+        let template_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("maps/factory_01.json");
+
+        let template = MapTemplate::load_from_file(&template_path)
+            .expect("Failed to load factory_01.json");
+
+        // Verify basic structure
+        assert_eq!(template.name, "Factory Floor 01");
+        assert_eq!(template.width, 20);
+        assert_eq!(template.height, 20);
+
+        // Verify spawn points (4 corners)
+        assert_eq!(template.spawn_points.len(), 4);
+        assert!(template.spawn_points.contains(&Point::new(2, 2)));
+        assert!(template.spawn_points.contains(&Point::new(17, 2)));
+        assert!(template.spawn_points.contains(&Point::new(2, 17)));
+        assert!(template.spawn_points.contains(&Point::new(17, 17)));
+
+        // Verify extraction points (4 cardinal directions from center)
+        assert_eq!(template.extraction_points.len(), 4);
+
+        // Verify zones exist
+        assert_eq!(template.zones.len(), 7);
+
+        // Verify hot_center zone is Rare tier
+        let hot_center = template.zones.iter().find(|z| z.id == "hot_center");
+        assert!(hot_center.is_some());
+        assert_eq!(hot_center.unwrap().loot_tier, LootTier::Rare);
+
+        // Verify edge zones are Common tier
+        let edge_nw = template.zones.iter().find(|z| z.id == "edge_nw");
+        assert!(edge_nw.is_some());
+        assert_eq!(edge_nw.unwrap().loot_tier, LootTier::Common);
+
+        // Verify variation percentage is within 20-30% range
+        assert!(template.variation_percentage >= 0.2 && template.variation_percentage <= 0.3);
+    }
+
+    #[test]
+    fn test_generate_grid_from_factory_01() {
+        let template_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("maps/factory_01.json");
+
+        let template = MapTemplate::load_from_file(&template_path)
+            .expect("Failed to load factory_01.json");
+
+        // Generate a grid with a fixed seed for reproducibility
+        let grid = template.generate_grid(Some(42))
+            .expect("Failed to generate grid from factory_01");
+
+        // Verify grid dimensions
+        assert_eq!(grid.width(), 20);
+        assert_eq!(grid.height(), 20);
+
+        // Verify border walls exist (top row)
+        for x in 0..20 {
+            assert_eq!(grid.get_tile_at(x, 0), Some(Tile::Wall), "Top wall missing at x={}", x);
+            assert_eq!(grid.get_tile_at(x, 19), Some(Tile::Wall), "Bottom wall missing at x={}", x);
+        }
+
+        // Verify border walls exist (left and right columns)
+        for y in 0..20 {
+            assert_eq!(grid.get_tile_at(0, y), Some(Tile::Wall), "Left wall missing at y={}", y);
+            assert_eq!(grid.get_tile_at(19, y), Some(Tile::Wall), "Right wall missing at y={}", y);
+        }
+
+        // Verify extraction points are walkable
+        assert!(grid.is_walkable(9, 2));   // north extraction
+        assert!(grid.is_walkable(2, 9));   // west extraction
+        assert!(grid.is_walkable(17, 9));  // east extraction
+        assert!(grid.is_walkable(9, 17));  // south extraction
+
+        // Verify spawn points are walkable
+        assert!(grid.is_walkable(2, 2));   // NW spawn
+        assert!(grid.is_walkable(17, 2));  // NE spawn
+        assert!(grid.is_walkable(2, 17));  // SW spawn
+        assert!(grid.is_walkable(17, 17)); // SE spawn
+
+        // Verify all spawns can reach all extractions (pathfinding validation passes)
+        // This is implicitly tested since generate_grid() succeeded
     }
 }

@@ -1,4 +1,4 @@
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use std::time::Duration;
 
 /// Database connection pool configuration
@@ -35,7 +35,7 @@ impl Default for DatabaseConfig {
 /// Configured PgPool ready for queries
 ///
 /// # Example
-/// ```
+/// ```ignore
 /// let pool = init_database("postgresql://user@localhost/thermite", None).await?;
 /// ```
 pub async fn init_database(
@@ -51,8 +51,8 @@ pub async fn init_database(
         .connect(database_url)
         .await?;
 
-    // Verify connection with simple query
-    sqlx::query!("SELECT 1 as test")
+    // Verify connection with simple query (runtime query, no compile-time check)
+    sqlx::query("SELECT 1 as test")
         .fetch_one(&pool)
         .await?;
 
@@ -69,8 +69,8 @@ pub async fn init_database(
 /// # Returns
 /// Ok(()) if all checks pass, Err otherwise
 pub async fn verify_schema(pool: &PgPool) -> Result<(), sqlx::Error> {
-    // Check that core tables exist
-    let tables = sqlx::query!(
+    // Check that core tables exist (runtime query)
+    let tables: Vec<sqlx::postgres::PgRow> = sqlx::query(
         r#"
         SELECT table_name
         FROM information_schema.tables
@@ -88,8 +88,8 @@ pub async fn verify_schema(pool: &PgPool) -> Result<(), sqlx::Error> {
         ));
     }
 
-    // Verify migrations table exists
-    let migrations = sqlx::query!(
+    // Verify migrations table exists (runtime query)
+    let migration_count: i64 = sqlx::query(
         r#"
         SELECT COUNT(*) as count
         FROM _sqlx_migrations
@@ -97,9 +97,10 @@ pub async fn verify_schema(pool: &PgPool) -> Result<(), sqlx::Error> {
         "#
     )
     .fetch_one(pool)
-    .await?;
+    .await?
+    .get("count");
 
-    if migrations.count.unwrap_or(0) == 0 {
+    if migration_count == 0 {
         return Err(sqlx::Error::Configuration(
             "No successful migrations found".into(),
         ));
@@ -112,7 +113,14 @@ pub async fn verify_schema(pool: &PgPool) -> Result<(), sqlx::Error> {
 mod tests {
     use super::*;
 
+    /// Integration test for database connection and schema verification.
+    /// Requires a running PostgreSQL database with migrations applied.
+    /// Set DATABASE_URL environment variable or run with default local connection.
+    ///
+    /// This test is ignored by default since it requires external infrastructure.
+    /// Run explicitly with: cargo test test_database_connection -- --ignored
     #[tokio::test]
+    #[ignore = "requires running PostgreSQL with migrations applied"]
     async fn test_database_connection() {
         let database_url = std::env::var("DATABASE_URL")
             .unwrap_or_else(|_| "postgresql://delorenj@localhost:5432/thermite".to_string());
