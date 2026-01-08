@@ -38,7 +38,7 @@ sprints:
     end_date: "2026-01-31"
     capacity_points: 30
     committed_points: 29
-    completed_points: 13
+    completed_points: 21
     status: "in_progress"
     goal: "Build map foundation and player movement mechanics"
     stories:
@@ -87,8 +87,18 @@ sprints:
       - story_id: "STORY-002"
         title: "Player Movement System"
         points: 5
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-07"
+        implementation_notes: |
+          Server-side: Player struct with position, health, movement validation, Direction enum.
+          GameState with tick loop, bomb management, player state tracking.
+          GameServer with WebSocket handling via tokio-tungstenite, 20Hz tick rate.
+          Protocol module with ClientMessage/ServerMessage, MessagePack serialization.
+          Client-side: Bevy 0.16 client with WASD/arrow key input handling.
+          Client-side prediction with PendingInputs queue and reconciliation.
+          Grid rendering with checkerboard pattern, player sprites.
+          98 unit tests passing across server modules.
       - story_id: "STORY-008"
         title: "Game Client Rendering (Bevy)"
         points: 8
