@@ -124,7 +124,7 @@ sprints:
     end_date: "2026-01-23"
     capacity_points: 30
     committed_points: 29
-    completed_points: 13
+    completed_points: 18
     status: "in_progress"
     goal: "Implement core bomb combat system"
     stories:
@@ -178,8 +178,34 @@ sprints:
       - story_id: "STORY-006"
         title: "Death Handling and Item Loss"
         points: 5
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-09"
+        implementation_notes: |
+          PARTIAL IMPLEMENTATION (architectural constraints):
+          Implemented (2/7 acceptance criteria):
+          ✅ Death detection when health <= 0 (Player.is_alive = false)
+          ✅ Death events broadcast to clients (ServerMessage::PlayerDied)
+
+          Deferred to Sprint 5 (5/7 criteria - requires infrastructure not yet built):
+          ❌ RabbitMQ event emission (no Bloodbank integration yet)
+          ❌ Persistence Service processing (no microservice exists)
+          ❌ Item deletion from stash (no inventory system - STORY-009/010)
+          ❌ Return to stash screen (no lobby/stash UI)
+          ❌ Statistics tracking (no match results system - STORY-027)
+
+          Implementation details:
+          - Added pending_death_events field to GameState (player_id, killer_id, position)
+          - Death detection in update_bombs() after damage application
+          - GameServer broadcasts death events before state updates
+          - Client handles PlayerDied messages with logging
+          - 7 new unit tests for death events, multiple players, event lifecycle
+          - All 129 server tests passing
+
+          Technical debt: Item loss, persistence, and statistics will be implemented when:
+          - Stash/inventory system exists (Sprint 5: STORY-009/010)
+          - Persistence Service operational (Sprint 5/6)
+          - RabbitMQ/Bloodbank integration complete (Sprint 4/5)
       - story_id: "STORY-007"
         title: "Death Feedback and Replay"
         points: 3

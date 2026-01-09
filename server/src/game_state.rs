@@ -33,6 +33,9 @@ pub type DetonationEvent = (Uuid, Position, Vec<Position>, Vec<Position>);
 /// Damage event data (player_id, damage_amount, new_health, killer_id)
 pub type DamageEvent = (Uuid, i32, i32, Option<Uuid>);
 
+/// Death event data (player_id, killer_id, position)
+pub type DeathEvent = (Uuid, Option<Uuid>, Position);
+
 /// Game state for a single match
 #[derive(Debug)]
 pub struct GameState {
@@ -56,6 +59,8 @@ pub struct GameState {
     pub pending_detonations: Vec<DetonationEvent>,
     /// Damage events from this tick (player_id, damage_amount, new_health, killer_id)
     pub pending_damage_events: Vec<DamageEvent>,
+    /// Death events from this tick (player_id, killer_id, position)
+    pub pending_death_events: Vec<DeathEvent>,
 }
 
 /// A bomb entity
@@ -102,6 +107,7 @@ impl GameState {
             is_active: true,
             pending_detonations: Vec::new(),
             pending_damage_events: Vec::new(),
+            pending_death_events: Vec::new(),
         }
     }
 
@@ -214,6 +220,7 @@ impl GameState {
         // Clear previous tick's events
         self.pending_detonations.clear();
         self.pending_damage_events.clear();
+        self.pending_death_events.clear();
 
         // Decrement timer
         let tick_ms = self.config.tick_rate_ms;
@@ -318,6 +325,7 @@ impl GameState {
                 for player in self.players.values_mut() {
                     if player.is_alive && blast_tiles.contains(&player.position) {
                         const BOMB_DAMAGE: i32 = 100; // Basic bomb is one-hit kill
+                        let position_at_death = player.position;
                         player.take_damage(BOMB_DAMAGE);
 
                         // Track damage event
@@ -327,6 +335,15 @@ impl GameState {
                             player.health,
                             Some(bomb.owner_id),
                         ));
+
+                        // Check if player died from this damage
+                        if !player.is_alive {
+                            self.pending_death_events.push((
+                                player.id,
+                                Some(bomb.owner_id),
+                                position_at_death,
+                            ));
+                        }
                     }
                 }
 
@@ -965,5 +982,169 @@ mod tests {
         assert_eq!(state.pending_damage_events.len(), 1);
         let (_player_id, damage, _new_health, _killer) = &state.pending_damage_events[0];
         assert_eq!(*damage, 100);
+    }
+
+    #[test]
+    fn test_death_event_emitted_on_fatal_damage() {
+        let mut state = create_test_state();
+
+        // Add player
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        // Place bomb
+        let bomb_owner_id = Uuid::new_v4();
+        let bomb = Bomb::new(bomb_owner_id, Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+
+        // Should have death event
+        assert_eq!(state.pending_death_events.len(), 1);
+        let (event_player_id, event_killer_id, event_position) = &state.pending_death_events[0];
+        assert_eq!(*event_player_id, player_id);
+        assert_eq!(*event_killer_id, Some(bomb_owner_id));
+        assert_eq!(*event_position, Position::new(5, 5));
+    }
+
+    #[test]
+    fn test_death_events_for_multiple_players() {
+        let mut state = create_test_state();
+
+        // Add 3 players
+        let player1_id = Uuid::new_v4();
+        let player2_id = Uuid::new_v4();
+        let player3_id = Uuid::new_v4();
+
+        state
+            .add_player(player1_id, Position::new(5, 5))
+            .expect("Failed to add player1");
+        state
+            .add_player(player2_id, Position::new(5, 4))
+            .expect("Failed to add player2");
+        state
+            .add_player(player3_id, Position::new(6, 5))
+            .expect("Failed to add player3");
+
+        // Place bomb
+        let bomb = Bomb::new(Uuid::new_v4(), Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+
+        // Should have 3 death events
+        assert_eq!(state.pending_death_events.len(), 3);
+
+        // Verify all player IDs are in death events
+        let death_player_ids: Vec<Uuid> = state
+            .pending_death_events
+            .iter()
+            .map(|(id, _, _)| *id)
+            .collect();
+
+        assert!(death_player_ids.contains(&player1_id));
+        assert!(death_player_ids.contains(&player2_id));
+        assert!(death_player_ids.contains(&player3_id));
+    }
+
+    #[test]
+    fn test_no_death_event_for_surviving_player() {
+        let mut state = create_test_state();
+
+        // Add player outside blast range
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(10, 10))
+            .expect("Failed to add player");
+
+        // Place bomb far away
+        let bomb = Bomb::new(Uuid::new_v4(), Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+
+        // No death events
+        assert_eq!(state.pending_death_events.len(), 0);
+
+        // Player still alive
+        let player = state.get_player(&player_id).unwrap();
+        assert!(player.is_alive);
+    }
+
+    #[test]
+    fn test_death_events_cleared_each_tick() {
+        let mut state = create_test_state();
+
+        // Add player
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        // Place bomb
+        let bomb = Bomb::new(Uuid::new_v4(), Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+        assert_eq!(state.pending_death_events.len(), 1);
+
+        // Next tick - events should be cleared
+        state.tick();
+        assert_eq!(state.pending_death_events.len(), 0);
+    }
+
+    #[test]
+    fn test_death_event_records_correct_position() {
+        let mut state = create_test_state();
+
+        // Add player at specific position
+        let player_id = Uuid::new_v4();
+        let death_position = Position::new(7, 3);
+        state
+            .add_player(player_id, death_position)
+            .expect("Failed to add player");
+
+        // Place bomb at same position
+        let bomb = Bomb::new(Uuid::new_v4(), death_position, 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+
+        // Death event should record position
+        assert_eq!(state.pending_death_events.len(), 1);
+        let (_, _, event_position) = &state.pending_death_events[0];
+        assert_eq!(*event_position, death_position);
+    }
+
+    #[test]
+    fn test_no_death_event_for_already_dead_player() {
+        let mut state = create_test_state();
+
+        // Add dead player
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        let player = state.players.get_mut(&player_id).unwrap();
+        player.is_alive = false;
+        player.health = 0;
+
+        // Place bomb
+        let bomb = Bomb::new(Uuid::new_v4(), Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+
+        // No death event for already dead player
+        assert_eq!(state.pending_death_events.len(), 0);
     }
 }
