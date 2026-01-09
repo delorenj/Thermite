@@ -124,7 +124,7 @@ sprints:
     end_date: "2026-01-23"
     capacity_points: 30
     committed_points: 29
-    completed_points: 5
+    completed_points: 10
     status: "in_progress"
     goal: "Implement core bomb combat system"
     stories:
@@ -146,8 +146,20 @@ sprints:
       - story_id: "STORY-004"
         title: "Bomb Detonation and Blast Pattern"
         points: 5
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-09"
+        implementation_notes: |
+          Server-side: Implemented calculate_blast() with 4-directional cross-pattern propagation (North/South/East/West).
+          Blast respects configurable range (default 2 tiles), stops at walls, destroys destructibles (converts to Floor).
+          Chain reaction system: bombs in blast area have timer set to 0, detonate next tick.
+          Added BombDetonation protocol message with blast_tiles and destroyed_tiles vectors.
+          GameServer broadcasts detonation events to all clients before state updates.
+          Added pending_detonations field to GameState to capture events per tick.
+          Client-side: Added BombDetonation message handler with logging.
+          Visual effects use existing STORY-008 placeholders.
+          11 new unit tests for blast propagation, chain reactions, destructibles, edge cases.
+          All 115 server tests passing. Acceptance criteria: 7/8 met (1 optional audio deferred).
       - story_id: "STORY-005"
         title: "Player Health and Damage System"
         points: 3
