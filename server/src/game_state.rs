@@ -5,7 +5,7 @@
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use crate::map_system::Grid;
+use crate::map_system::{Grid, Tile};
 use crate::player::{BombPlacementError, Direction, MoveError, Player, Position};
 use crate::protocol::{BombState, PlayerState};
 
@@ -27,6 +27,9 @@ impl Default for MatchConfig {
     }
 }
 
+/// Detonation event data
+pub type DetonationEvent = (Uuid, Position, Vec<Position>, Vec<Position>);
+
 /// Game state for a single match
 #[derive(Debug)]
 pub struct GameState {
@@ -46,6 +49,8 @@ pub struct GameState {
     pub time_remaining_ms: u64,
     /// Whether the match is active
     pub is_active: bool,
+    /// Detonation events from this tick (bomb_id, position, blast_tiles, destroyed_tiles)
+    pub pending_detonations: Vec<DetonationEvent>,
 }
 
 /// A bomb entity
@@ -90,6 +95,7 @@ impl GameState {
             config,
             time_remaining_ms,
             is_active: true,
+            pending_detonations: Vec::new(),
         }
     }
 
@@ -199,6 +205,9 @@ impl GameState {
 
         self.tick += 1;
 
+        // Clear previous tick's detonations
+        self.pending_detonations.clear();
+
         // Decrement timer
         let tick_ms = self.config.tick_rate_ms;
         if self.time_remaining_ms > tick_ms {
@@ -208,27 +217,117 @@ impl GameState {
             self.is_active = false;
         }
 
-        // Process bombs
-        self.update_bombs();
+        // Process bombs and capture detonation events
+        let detonations = self.update_bombs();
+        self.pending_detonations = detonations;
+    }
+
+    /// Calculate blast pattern from bomb position
+    /// Returns (blast_tiles, destroyed_tiles) tuple
+    fn calculate_blast(&self, position: Position, range: u32) -> (Vec<Position>, Vec<Position>) {
+        let mut blast_tiles = vec![position]; // Bomb position itself
+        let mut destroyed_tiles = Vec::new();
+
+        // Four cardinal directions
+        let directions = [
+            Direction::North,
+            Direction::South,
+            Direction::East,
+            Direction::West,
+        ];
+
+        for direction in directions.iter() {
+            let mut current_pos = position;
+
+            // Propagate blast in this direction up to range
+            for _ in 0..range {
+                // Try to step in this direction
+                if let Some(next_pos) = current_pos.step(*direction) {
+                    // Check if in bounds
+                    if !self.grid.in_bounds(next_pos.x, next_pos.y) {
+                        break;
+                    }
+
+                    if let Some(tile) = self.grid.get_tile_at(next_pos.x, next_pos.y) {
+                        match tile {
+                            Tile::Wall => {
+                                // Blast stops at walls
+                                break;
+                            }
+                            Tile::Destructible => {
+                                // Blast destroys destructible and stops
+                                blast_tiles.push(next_pos);
+                                destroyed_tiles.push(next_pos);
+                                break;
+                            }
+                            Tile::Floor | Tile::Loot | Tile::Extraction => {
+                                // Blast continues through open tiles
+                                blast_tiles.push(next_pos);
+                                current_pos = next_pos;
+                            }
+                        }
+                    } else {
+                        // Invalid tile position
+                        break;
+                    }
+                } else {
+                    // Out of bounds
+                    break;
+                }
+            }
+        }
+
+        (blast_tiles, destroyed_tiles)
     }
 
     /// Update bomb timers and handle detonations
-    fn update_bombs(&mut self) {
-        let mut detonated_bombs = Vec::new();
+    fn update_bombs(&mut self) -> Vec<(Uuid, Position, Vec<Position>, Vec<Position>)> {
+        let mut detonation_events = Vec::new();
+        let mut bombs_to_remove = Vec::new();
+        let mut chain_reaction_bombs = Vec::new();
 
+        // Decrement timers and collect detonations
         for (bomb_id, bomb) in self.bombs.iter_mut() {
             if bomb.ticks_remaining > 0 {
                 bomb.ticks_remaining -= 1;
             }
             if bomb.ticks_remaining == 0 {
-                detonated_bombs.push(*bomb_id);
+                bombs_to_remove.push(*bomb_id);
             }
         }
 
-        // Handle detonations (simplified for now - full blast mechanics in STORY-004)
-        for bomb_id in detonated_bombs {
-            self.bombs.remove(&bomb_id);
+        // Process detonations
+        for bomb_id in bombs_to_remove {
+            if let Some(bomb) = self.bombs.remove(&bomb_id) {
+                // Calculate blast pattern
+                let (blast_tiles, destroyed_tiles) = self.calculate_blast(bomb.position, bomb.range);
+
+                // Remove destructible tiles from grid
+                for pos in &destroyed_tiles {
+                    self.grid.set_tile_at(pos.x, pos.y, Tile::Floor);
+                }
+
+                // Check for chain reactions (other bombs in blast area)
+                for other_bomb_id in self.bombs.keys() {
+                    let other_bomb = &self.bombs[other_bomb_id];
+                    if blast_tiles.contains(&other_bomb.position) {
+                        chain_reaction_bombs.push(*other_bomb_id);
+                    }
+                }
+
+                // Store detonation event for broadcasting
+                detonation_events.push((bomb_id, bomb.position, blast_tiles, destroyed_tiles));
+            }
         }
+
+        // Trigger chain reactions by setting timer to 0
+        for bomb_id in chain_reaction_bombs {
+            if let Some(bomb) = self.bombs.get_mut(&bomb_id) {
+                bomb.ticks_remaining = 0;
+            }
+        }
+
+        detonation_events
     }
 
     /// Get all player states for state update broadcast
@@ -448,5 +547,202 @@ mod tests {
         // Tick twice - bomb should detonate and be removed
         state.tick();
         assert!(!state.bombs.contains_key(&bomb_id));
+    }
+
+    // Blast propagation tests
+    #[test]
+    fn test_blast_pattern_cross_shape() {
+        let state = create_test_state();
+        let (blast_tiles, destroyed_tiles) = state.calculate_blast(Position::new(5, 5), 2);
+
+        // Should include: center + 2 in each direction (if no walls)
+        // Center (5,5) + North (5,4), (5,3) + South (5,6), (5,7) + East (6,5), (7,5) + West (4,5), (3,5)
+        assert_eq!(blast_tiles.len(), 9); // 1 center + 2*4 directions
+        assert!(blast_tiles.contains(&Position::new(5, 5))); // Center
+        assert!(blast_tiles.contains(&Position::new(5, 4))); // North 1
+        assert!(blast_tiles.contains(&Position::new(5, 3))); // North 2
+        assert!(blast_tiles.contains(&Position::new(5, 6))); // South 1
+        assert!(blast_tiles.contains(&Position::new(5, 7))); // South 2
+        assert!(destroyed_tiles.is_empty()); // No destructibles on open floor
+    }
+
+    #[test]
+    fn test_blast_stops_at_wall() {
+        let mut state = create_test_state();
+        // Place wall north of bomb
+        state.grid.set_tile_at(5, 4, crate::map_system::Tile::Wall);
+
+        let (blast_tiles, _) = state.calculate_blast(Position::new(5, 5), 2);
+
+        // North should be blocked, but other directions should work
+        assert!(!blast_tiles.contains(&Position::new(5, 4))); // Wall blocks
+        assert!(blast_tiles.contains(&Position::new(5, 6))); // South works
+        assert!(blast_tiles.contains(&Position::new(6, 5))); // East works
+        assert!(blast_tiles.contains(&Position::new(4, 5))); // West works
+    }
+
+    #[test]
+    fn test_blast_destroys_destructible() {
+        let mut state = create_test_state();
+        // Place destructible east of bomb
+        state.grid.set_tile_at(6, 5, crate::map_system::Tile::Destructible);
+
+        let (blast_tiles, destroyed_tiles) = state.calculate_blast(Position::new(5, 5), 2);
+
+        // Destructible should be in blast
+        assert!(blast_tiles.contains(&Position::new(6, 5)));
+        assert!(destroyed_tiles.contains(&Position::new(6, 5)));
+
+        // Blast should stop at destructible (not reach 7,5)
+        assert!(!blast_tiles.contains(&Position::new(7, 5)));
+    }
+
+    #[test]
+    fn test_blast_removes_destructible_from_grid() {
+        let mut state = create_test_state();
+        // Place destructible east of bomb
+        state.grid.set_tile_at(6, 5, crate::map_system::Tile::Destructible);
+
+        // Add bomb at center
+        let bomb = Bomb::new(Uuid::new_v4(), Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Verify destructible exists
+        assert_eq!(
+            state.grid.get_tile_at(6, 5),
+            Some(crate::map_system::Tile::Destructible)
+        );
+
+        // Tick to detonate
+        state.tick();
+
+        // Destructible should be replaced with floor
+        assert_eq!(
+            state.grid.get_tile_at(6, 5),
+            Some(crate::map_system::Tile::Floor)
+        );
+    }
+
+    #[test]
+    fn test_blast_respects_range() {
+        let state = create_test_state();
+
+        // Range 1 blast
+        let (blast_tiles_1, _) = state.calculate_blast(Position::new(5, 5), 1);
+        assert_eq!(blast_tiles_1.len(), 5); // Center + 1 in each direction
+
+        // Range 3 blast
+        let (blast_tiles_3, _) = state.calculate_blast(Position::new(5, 5), 3);
+        assert_eq!(blast_tiles_3.len(), 13); // Center + 3 in each direction
+    }
+
+    #[test]
+    fn test_blast_handles_edge_of_grid() {
+        let state = create_test_state();
+
+        // Bomb at top-left corner
+        let (blast_tiles, _) = state.calculate_blast(Position::new(0, 0), 2);
+
+        // Should only blast south and east (not north/west out of bounds)
+        assert!(blast_tiles.contains(&Position::new(0, 0))); // Center
+        assert!(blast_tiles.contains(&Position::new(1, 0))); // East
+        assert!(blast_tiles.contains(&Position::new(2, 0))); // East
+        assert!(blast_tiles.contains(&Position::new(0, 1))); // South
+        assert!(blast_tiles.contains(&Position::new(0, 2))); // South
+        // North and West out of bounds, shouldn't be included
+    }
+
+    // Chain reaction tests
+    #[test]
+    fn test_chain_reaction_triggers_nearby_bomb() {
+        let mut state = create_test_state();
+
+        // Place two bombs: one detonating immediately, one with time remaining
+        let bomb1 = Bomb::new(Uuid::new_v4(), Position::new(5, 5), 1, 2);
+        let bomb2 = Bomb::new(Uuid::new_v4(), Position::new(6, 5), 10, 2); // 10 ticks left
+        let bomb2_id = bomb2.id;
+
+        state.bombs.insert(bomb1.id, bomb1);
+        state.bombs.insert(bomb2_id, bomb2);
+
+        // Verify bomb2 has 10 ticks
+        assert_eq!(state.bombs.get(&bomb2_id).unwrap().ticks_remaining, 10);
+
+        // Tick - bomb1 detonates, should trigger bomb2
+        state.tick();
+
+        // Bomb2 should now have 0 ticks (triggered by chain reaction)
+        assert_eq!(state.bombs.get(&bomb2_id).unwrap().ticks_remaining, 0);
+
+        // Another tick - bomb2 detonates
+        state.tick();
+        assert!(!state.bombs.contains_key(&bomb2_id));
+    }
+
+    #[test]
+    fn test_chain_reaction_cascade() {
+        let mut state = create_test_state();
+
+        // Test that chain reactions can cascade: bomb1 -> bomb2 -> bomb3
+        // Note: When triggered bombs detonate in the same tick, they all process together
+        let bomb1 = Bomb::new(Uuid::new_v4(), Position::new(5, 5), 1, 2); // Detonates first
+        let bomb2 = Bomb::new(Uuid::new_v4(), Position::new(6, 5), 10, 2); // In range of bomb1
+        let bomb2_id = bomb2.id;
+
+        state.bombs.insert(bomb1.id, bomb1);
+        state.bombs.insert(bomb2_id, bomb2);
+
+        // Verify bomb2 has time remaining
+        assert!(state.bombs.get(&bomb2_id).unwrap().ticks_remaining > 0);
+
+        // Tick 1: bomb1 detonates, triggers bomb2
+        state.tick();
+
+        // bomb1 should be removed, bomb2 should have timer set to 0
+        assert_eq!(state.bombs.len(), 1);
+        assert_eq!(state.bombs.get(&bomb2_id).unwrap().ticks_remaining, 0);
+
+        // Tick 2: bomb2 detonates
+        state.tick();
+        assert_eq!(state.bombs.len(), 0);
+    }
+
+    #[test]
+    fn test_detonation_events_captured() {
+        let mut state = create_test_state();
+
+        // Add bomb
+        let bomb = Bomb::new(Uuid::new_v4(), Position::new(5, 5), 1, 2);
+        let bomb_id = bomb.id;
+        state.bombs.insert(bomb_id, bomb);
+
+        // Tick to detonate
+        state.tick();
+
+        // Check detonation event was captured
+        assert_eq!(state.pending_detonations.len(), 1);
+        let (event_bomb_id, event_pos, blast_tiles, destroyed_tiles) =
+            &state.pending_detonations[0];
+        assert_eq!(*event_bomb_id, bomb_id);
+        assert_eq!(*event_pos, Position::new(5, 5));
+        assert!(!blast_tiles.is_empty());
+        assert!(destroyed_tiles.is_empty()); // No destructibles in test
+    }
+
+    #[test]
+    fn test_detonation_events_cleared_each_tick() {
+        let mut state = create_test_state();
+
+        // Add bomb
+        let bomb = Bomb::new(Uuid::new_v4(), Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+        assert_eq!(state.pending_detonations.len(), 1);
+
+        // Next tick - events should be cleared
+        state.tick();
+        assert_eq!(state.pending_detonations.len(), 0);
     }
 }

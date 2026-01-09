@@ -546,6 +546,23 @@ fn receive_network_messages(
                 }
             }
 
+            ServerMessage::BombDetonation {
+                bomb_id,
+                position,
+                blast_tiles,
+                destroyed_tiles,
+            } => {
+                info!(
+                    "Bomb {} detonated at {:?}, blast {} tiles, destroyed {} tiles",
+                    bomb_id,
+                    position,
+                    blast_tiles.len(),
+                    destroyed_tiles.len()
+                );
+                // TODO STORY-008: Trigger explosion animation/audio here
+                // For now, just log the event - visual effects already exist as placeholder
+            }
+
             ServerMessage::CommandAck {
                 sequence,
                 success,

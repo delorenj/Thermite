@@ -56,6 +56,13 @@ pub enum ServerMessage {
     },
     /// Match ended
     MatchEnded { reason: MatchEndReason },
+    /// Bomb detonation event
+    BombDetonation {
+        bomb_id: Uuid,
+        position: Position,
+        blast_tiles: Vec<Position>,
+        destroyed_tiles: Vec<Position>,
+    },
     /// Pong response
     Pong { timestamp: u64 },
     /// Error message

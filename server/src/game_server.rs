@@ -143,6 +143,17 @@ impl GameServer {
         let mut state = self.state.write().await;
         state.tick();
 
+        // Broadcast detonation events first (before state update)
+        for (bomb_id, position, blast_tiles, destroyed_tiles) in &state.pending_detonations {
+            let detonation = ServerMessage::BombDetonation {
+                bomb_id: *bomb_id,
+                position: *position,
+                blast_tiles: blast_tiles.clone(),
+                destroyed_tiles: destroyed_tiles.clone(),
+            };
+            let _ = self.broadcast_tx.send(detonation);
+        }
+
         // Broadcast state update to all players
         let update = ServerMessage::StateUpdate {
             tick: state.tick,
