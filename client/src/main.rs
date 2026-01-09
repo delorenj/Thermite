@@ -196,6 +196,23 @@ struct BombStates(Vec<thermite_server::protocol::BombState>);
 #[derive(Resource, Default)]
 struct PreviousBombStates(Vec<thermite_server::protocol::BombState>);
 
+/// Death state tracking
+#[derive(Resource, Default)]
+struct DeathState {
+    is_dead: bool,
+    killer_id: Option<uuid::Uuid>,
+    death_position: Option<Position>,
+    death_time: Option<f32>,
+}
+
+/// Death overlay UI marker
+#[derive(Component)]
+struct DeathOverlay;
+
+/// Death overlay text marker
+#[derive(Component)]
+struct DeathOverlayText;
+
 // =============================================================================
 // Main Entry Point
 // =============================================================================
@@ -220,6 +237,7 @@ fn main() {
         .init_resource::<RemotePlayers>()
         .init_resource::<BombStates>()
         .init_resource::<PreviousBombStates>()
+        .init_resource::<DeathState>()
         // Startup systems
         .add_systems(
             Startup,
@@ -235,6 +253,8 @@ fn main() {
                 update_health_bars,
                 update_raid_timer_ui,
                 update_minimap,
+                spawn_death_overlay,
+                update_death_overlay,
                 update_bomb_sprites,
                 spawn_explosions,
                 update_explosions,
@@ -476,6 +496,8 @@ fn receive_network_messages(
     mut bomb_states: ResMut<BombStates>,
     mut pending_inputs: ResMut<PendingInputs>,
     mut remote_players: ResMut<RemotePlayers>,
+    mut death_state: ResMut<DeathState>,
+    time: Res<Time>,
     mut local_player_query: Query<
         (&mut GridPosition, &mut PredictedPosition),
         With<LocalPlayer>,
@@ -622,6 +644,17 @@ fn receive_network_messages(
                     "Player {} died at {:?}, killed by {:?}",
                     player_id, position, killer_id
                 );
+
+                // Check if it's our local player who died
+                if let Some(local_player_id) = network.player_id {
+                    if player_id == local_player_id {
+                        death_state.is_dead = true;
+                        death_state.killer_id = killer_id;
+                        death_state.death_position = Some(position);
+                        death_state.death_time = Some(time.elapsed_secs());
+                        info!("Local player died! Triggering death overlay");
+                    }
+                }
             }
 
             ServerMessage::MatchEnded { reason } => {
@@ -799,6 +832,150 @@ fn update_minimap(
             node.top = Val::Px(grid_pos.y as f32 * scale_y);
         }
     }
+}
+
+/// Spawn death overlay UI when player dies
+fn spawn_death_overlay(
+    mut commands: Commands,
+    death_state: Res<DeathState>,
+    overlay_query: Query<Entity, With<DeathOverlay>>,
+) {
+    // Only spawn if dead and overlay doesn't exist
+    if !death_state.is_dead || !overlay_query.is_empty() {
+        return;
+    }
+
+    // Spawn full-screen semi-transparent overlay
+    commands
+        .spawn((
+            DeathOverlay,
+            Node {
+                position_type: PositionType::Absolute,
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
+        ))
+        .with_children(|parent| {
+            // "YOU ARE DEAD" text
+            parent.spawn((
+                DeathOverlayText,
+                Text::new("YOU ARE DEAD"),
+                TextFont {
+                    font_size: 60.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.9, 0.1, 0.1)),
+                Node {
+                    margin: UiRect::all(Val::Px(20.0)),
+                    ..default()
+                },
+            ));
+
+            // Killer info (if available)
+            if let Some(killer_id) = death_state.killer_id {
+                parent.spawn((
+                    Text::new(format!("Killed by: {}", killer_id)),
+                    TextFont {
+                        font_size: 24.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                    Node {
+                        margin: UiRect::all(Val::Px(10.0)),
+                        ..default()
+                    },
+                ));
+            } else {
+                parent.spawn((
+                    Text::new("Suicide"),
+                    TextFont {
+                        font_size: 24.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                    Node {
+                        margin: UiRect::all(Val::Px(10.0)),
+                        ..default()
+                    },
+                ));
+            }
+
+            // Timer countdown text
+            parent.spawn((
+                DeathOverlayText,
+                Text::new("Returning to stash in 5s..."),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                Node {
+                    margin: UiRect::all(Val::Px(30.0)),
+                    ..default()
+                },
+            ));
+
+            // Return to Stash button placeholder
+            parent.spawn((
+                Button,
+                Node {
+                    width: Val::Px(200.0),
+                    height: Val::Px(50.0),
+                    margin: UiRect::all(Val::Px(10.0)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(Color::srgb(0.3, 0.3, 0.3)),
+            ))
+            .with_children(|button| {
+                button.spawn((
+                    Text::new("Return to Stash"),
+                    TextFont {
+                        font_size: 18.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                ));
+            });
+        });
+
+    info!("Death overlay spawned");
+}
+
+/// Update death overlay countdown timer
+fn update_death_overlay(
+    death_state: Res<DeathState>,
+    time: Res<Time>,
+    mut text_query: Query<&mut Text, With<DeathOverlayText>>,
+) {
+    if !death_state.is_dead {
+        return;
+    }
+
+    let Some(death_time) = death_state.death_time else {
+        return;
+    };
+
+    const FREEZE_DURATION: f32 = 5.0; // 5 seconds
+    let elapsed = time.elapsed_secs() - death_time;
+    let remaining = (FREEZE_DURATION - elapsed).max(0.0);
+
+    // Update countdown timer text (second text element)
+    for (i, mut text) in text_query.iter_mut().enumerate() {
+        if i == 1 {
+            // Second text is the countdown
+            **text = format!("Returning to stash in {:.0}s...", remaining);
+        }
+    }
+
+    // TODO: After timer expires, disconnect and return to stash UI
+    // This will be implemented when lobby/stash system exists (Sprint 5)
 }
 
 /// Update bomb sprites based on server bomb states
