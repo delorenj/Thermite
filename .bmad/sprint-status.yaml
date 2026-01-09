@@ -124,15 +124,25 @@ sprints:
     end_date: "2026-01-23"
     capacity_points: 30
     committed_points: 29
-    completed_points: 0
+    completed_points: 5
     status: "in_progress"
     goal: "Implement core bomb combat system"
     stories:
       - story_id: "STORY-003"
         title: "Bomb Placement Mechanic"
         points: 5
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-09"
+        implementation_notes: |
+          Server-side: Added bomb inventory (bombs_remaining) and cooldown tracking (last_bomb_placement_tick) to Player.
+          Implemented can_place_bomb() validation (alive, inventory, 1-second cooldown = 20 ticks).
+          Implemented place_bomb() with error handling (PlayerDead, NoBombsRemaining, CooldownNotElapsed, TileOccupied).
+          GameState::place_bomb() validates tile occupancy and creates Bomb entity (3-second timer = 60 ticks, range 2).
+          Wired PlaceBomb command through GameServer with acknowledgment messages.
+          Client-side: Added Spacebar input detection to send PlaceBomb message with sequence number.
+          7 unit tests for bomb placement logic. All 105 server tests passing.
+          Acceptance criteria: 6/6 core met, 1 optional audio feedback deferred.
       - story_id: "STORY-004"
         title: "Bomb Detonation and Blast Pattern"
         points: 5
