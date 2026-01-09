@@ -69,6 +69,10 @@ pub struct Player {
     pub is_alive: bool,
     /// Sequence number for last processed command (for client prediction reconciliation)
     pub last_processed_sequence: u64,
+    /// Number of bombs remaining in inventory
+    pub bombs_remaining: u32,
+    /// Tick number when player last placed a bomb (for cooldown)
+    pub last_bomb_placement_tick: u64,
 }
 
 impl Player {
@@ -79,6 +83,8 @@ impl Player {
             health: 100,
             is_alive: true,
             last_processed_sequence: 0,
+            bombs_remaining: 1, // Start with 1 basic bomb
+            last_bomb_placement_tick: 0,
         }
     }
 
@@ -130,6 +136,42 @@ impl Player {
             self.is_alive = false;
         }
     }
+
+    /// Check if player can place a bomb at current tick
+    /// Validates: alive, has bombs, and cooldown elapsed
+    pub fn can_place_bomb(&self, current_tick: u64, cooldown_ticks: u64) -> bool {
+        if !self.is_alive {
+            return false;
+        }
+
+        if self.bombs_remaining == 0 {
+            return false;
+        }
+
+        // Allow initial placement (never placed a bomb before)
+        if self.last_bomb_placement_tick == 0 {
+            return true;
+        }
+
+        // Check cooldown (1 second = 20 ticks at 50ms per tick)
+        let ticks_since_last_placement = current_tick.saturating_sub(self.last_bomb_placement_tick);
+        ticks_since_last_placement >= cooldown_ticks
+    }
+
+    /// Place a bomb, consuming one from inventory
+    pub fn place_bomb(&mut self, current_tick: u64) -> Result<(), BombPlacementError> {
+        if !self.is_alive {
+            return Err(BombPlacementError::PlayerDead);
+        }
+
+        if self.bombs_remaining == 0 {
+            return Err(BombPlacementError::NoBombsRemaining);
+        }
+
+        self.bombs_remaining -= 1;
+        self.last_bomb_placement_tick = current_tick;
+        Ok(())
+    }
 }
 
 /// Errors that can occur during movement
@@ -141,6 +183,19 @@ pub enum MoveError {
     OutOfBounds,
     #[error("Target tile is blocked")]
     TileBlocked,
+}
+
+/// Errors that can occur during bomb placement
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum BombPlacementError {
+    #[error("Player is dead")]
+    PlayerDead,
+    #[error("No bombs remaining in inventory")]
+    NoBombsRemaining,
+    #[error("Cooldown not elapsed")]
+    CooldownNotElapsed,
+    #[error("Tile already has a bomb")]
+    TileOccupied,
 }
 
 #[cfg(test)]
@@ -361,5 +416,80 @@ mod tests {
         assert_eq!(deserialized.position, Position::new(5, 5));
         assert_eq!(deserialized.health, 100);
         assert!(deserialized.is_alive);
+    }
+
+    // Bomb placement tests
+    #[test]
+    fn test_can_place_bomb_initially() {
+        let player = Player::new(Uuid::new_v4(), Position::new(5, 5));
+        let cooldown_ticks = 20;
+
+        assert!(player.can_place_bomb(0, cooldown_ticks));
+    }
+
+    #[test]
+    fn test_cannot_place_bomb_when_dead() {
+        let mut player = Player::new(Uuid::new_v4(), Position::new(5, 5));
+        player.is_alive = false;
+        let cooldown_ticks = 20;
+
+        assert!(!player.can_place_bomb(100, cooldown_ticks));
+    }
+
+    #[test]
+    fn test_cannot_place_bomb_without_inventory() {
+        let mut player = Player::new(Uuid::new_v4(), Position::new(5, 5));
+        player.bombs_remaining = 0;
+        let cooldown_ticks = 20;
+
+        assert!(!player.can_place_bomb(100, cooldown_ticks));
+    }
+
+    #[test]
+    fn test_cannot_place_bomb_during_cooldown() {
+        let mut player = Player::new(Uuid::new_v4(), Position::new(5, 5));
+        player.last_bomb_placement_tick = 100;
+        let cooldown_ticks = 20;
+
+        // 10 ticks later - still in cooldown
+        assert!(!player.can_place_bomb(110, cooldown_ticks));
+
+        // 20 ticks later - cooldown elapsed
+        assert!(player.can_place_bomb(120, cooldown_ticks));
+    }
+
+    #[test]
+    fn test_place_bomb_success() {
+        let mut player = Player::new(Uuid::new_v4(), Position::new(5, 5));
+        let current_tick = 100;
+
+        let initial_bombs = player.bombs_remaining;
+        let result = player.place_bomb(current_tick);
+
+        assert!(result.is_ok());
+        assert_eq!(player.bombs_remaining, initial_bombs - 1);
+        assert_eq!(player.last_bomb_placement_tick, current_tick);
+    }
+
+    #[test]
+    fn test_place_bomb_when_dead() {
+        let mut player = Player::new(Uuid::new_v4(), Position::new(5, 5));
+        player.is_alive = false;
+
+        let result = player.place_bomb(100);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), BombPlacementError::PlayerDead);
+    }
+
+    #[test]
+    fn test_place_bomb_without_inventory() {
+        let mut player = Player::new(Uuid::new_v4(), Position::new(5, 5));
+        player.bombs_remaining = 0;
+
+        let result = player.place_bomb(100);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), BombPlacementError::NoBombsRemaining);
     }
 }

@@ -36,6 +36,11 @@ pub enum GameCommand {
         direction: Direction,
         sequence: u64,
     },
+    /// Player placed a bomb
+    PlaceBomb {
+        player_id: Uuid,
+        sequence: u64,
+    },
     /// Player disconnected
     PlayerDisconnect { player_id: Uuid },
 }
@@ -199,6 +204,33 @@ impl GameServer {
                     let _ = tx.send(ack).await;
                 }
             }
+            GameCommand::PlaceBomb {
+                player_id,
+                sequence,
+            } => {
+                let mut state = self.state.write().await;
+                let result = state.place_bomb(&player_id, sequence);
+
+                // Send acknowledgment to the specific player
+                let channels = self.player_channels.read().await;
+                if let Some(tx) = channels.get(&player_id) {
+                    let ack = match result {
+                        Ok(_bomb_id) => ServerMessage::CommandAck {
+                            sequence,
+                            success: true,
+                            position: None,
+                            error: None,
+                        },
+                        Err(e) => ServerMessage::CommandAck {
+                            sequence,
+                            success: false,
+                            position: None,
+                            error: Some(e.to_string()),
+                        },
+                    };
+                    let _ = tx.send(ack).await;
+                }
+            }
             GameCommand::PlayerDisconnect { player_id } => {
                 let mut state = self.state.write().await;
                 state.remove_player(&player_id);
@@ -346,9 +378,13 @@ async fn handle_client_message(
                 })
                 .await;
         }
-        ClientMessage::PlaceBomb { sequence: _ } => {
-            // Bomb placement will be implemented in STORY-003
-            warn!("Bomb placement not yet implemented");
+        ClientMessage::PlaceBomb { sequence } => {
+            let _ = command_tx
+                .send(GameCommand::PlaceBomb {
+                    player_id,
+                    sequence,
+                })
+                .await;
         }
         ClientMessage::Extract { sequence: _ } => {
             // Extraction will be implemented in STORY-015

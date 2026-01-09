@@ -392,6 +392,21 @@ fn handle_input(
     network: Res<NetworkState>,
     mut query: Query<(&GridPosition, &mut PredictedPosition), With<LocalPlayer>>,
 ) {
+    // Check for bomb placement (Spacebar)
+    if keyboard.just_pressed(KeyCode::Space) {
+        // Increment sequence
+        sequence.0 += 1;
+        let seq = sequence.0;
+
+        info!("Bomb placement requested: seq={}", seq);
+
+        // Send to server
+        if let Some(tx) = &network.send_tx {
+            let msg = ClientMessage::PlaceBomb { sequence: seq };
+            let _ = tx.send(msg);
+        }
+    }
+
     // Get direction from WASD/Arrow keys
     let direction = if keyboard.just_pressed(KeyCode::KeyW) || keyboard.just_pressed(KeyCode::ArrowUp)
     {

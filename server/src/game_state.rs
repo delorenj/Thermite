@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::map_system::Grid;
-use crate::player::{Direction, MoveError, Player, Position};
+use crate::player::{BombPlacementError, Direction, MoveError, Player, Position};
 use crate::protocol::{BombState, PlayerState};
 
 /// Configuration for a match
@@ -138,6 +138,57 @@ impl GameState {
         let result = player.try_move(direction, &self.grid)?;
         player.last_processed_sequence = sequence;
         Ok(result)
+    }
+
+    /// Process a bomb placement command for a player
+    pub fn place_bomb(
+        &mut self,
+        player_id: &Uuid,
+        sequence: u64,
+    ) -> Result<Uuid, BombPlacementError> {
+        // Cooldown: 1 second = 20 ticks at 50ms per tick
+        let cooldown_ticks = 20;
+
+        // Get player and validate they can place a bomb
+        let player = self
+            .players
+            .get_mut(player_id)
+            .ok_or(BombPlacementError::PlayerDead)?;
+
+        // Check if player can place bomb (alive, has bombs, cooldown elapsed)
+        if !player.can_place_bomb(self.tick, cooldown_ticks) {
+            let ticks_since_last = self.tick.saturating_sub(player.last_bomb_placement_tick);
+            if ticks_since_last < cooldown_ticks {
+                return Err(BombPlacementError::CooldownNotElapsed);
+            }
+            if player.bombs_remaining == 0 {
+                return Err(BombPlacementError::NoBombsRemaining);
+            }
+            if !player.is_alive {
+                return Err(BombPlacementError::PlayerDead);
+            }
+        }
+
+        let position = player.position;
+
+        // Check if tile already has a bomb
+        if self.bombs.values().any(|b| b.position == position) {
+            return Err(BombPlacementError::TileOccupied);
+        }
+
+        // Place the bomb
+        player.place_bomb(self.tick)?;
+        player.last_processed_sequence = sequence;
+
+        // Create bomb with 3 second timer (60 ticks at 50ms per tick)
+        let fuse_ticks = 60;
+        let range = 2; // Basic bomb range
+        let bomb = Bomb::new(*player_id, position, fuse_ticks, range);
+        let bomb_id = bomb.id;
+
+        self.bombs.insert(bomb_id, bomb);
+
+        Ok(bomb_id)
     }
 
     /// Advance the game state by one tick
