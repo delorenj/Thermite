@@ -38,8 +38,8 @@ sprints:
     end_date: "2026-01-31"
     capacity_points: 30
     committed_points: 29
-    completed_points: 21
-    status: "in_progress"
+    completed_points: 29
+    status: "completed"
     goal: "Build map foundation and player movement mechanics"
     stories:
       - story_id: "STORY-001"
@@ -102,8 +102,22 @@ sprints:
       - story_id: "STORY-008"
         title: "Game Client Rendering (Bevy)"
         points: 8
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-09"
+        implementation_notes: |
+          Bevy 0.16 client with comprehensive visual features:
+          - Enhanced grid rendering with checkerboard pattern and subtle highlights
+          - Health bars above players with color coding (green/yellow/red) based on health percentage
+          - Raid timer UI at top center displaying time in MM:SS format
+          - Minimap overlay (150x150px) at bottom right with player indicators (green=local, red=remote)
+          - Placeholder bomb sprites (red squares) with countdown timer text overlays
+          - Placeholder explosion animations with fade-out and expansion effects
+          - Resizable window with 800x600 default resolution
+          - Cross-platform build configuration (Windows/macOS/Linux)
+          - Release profile optimizations (opt-level=3, thin LTO, single codegen unit)
+          - All visual systems use Bevy change detection for performance
+          Note: Bomb and explosion systems are placeholder implementations pending STORY-003 through STORY-007.
 
   - sprint_number: 3
     start_date: "2026-02-03"
@@ -297,13 +311,13 @@ sprints:
 
 velocity:
   sprint_1: 21
-  sprint_2: null
+  sprint_2: 29
   sprint_3: null
   sprint_4: null
   sprint_5: null
   sprint_6: null
   sprint_7: null
-  rolling_average: 21
+  rolling_average: 25
 
 team:
   size: 1

@@ -75,6 +75,65 @@ struct PendingInput {
     predicted_position: Position,
 }
 
+/// Health bar component
+#[derive(Component)]
+struct HealthBar {
+    /// Owner entity
+    owner: Entity,
+}
+
+/// Health value component
+#[derive(Component, Clone, Copy)]
+struct Health {
+    current: i32,
+    max: i32,
+}
+
+impl Health {
+    fn new(max: i32) -> Self {
+        Health { current: max, max }
+    }
+
+    fn percentage(&self) -> f32 {
+        (self.current as f32 / self.max as f32).clamp(0.0, 1.0)
+    }
+}
+
+/// Marker for the raid timer UI text
+#[derive(Component)]
+struct RaidTimerText;
+
+/// Marker for minimap elements
+#[derive(Component)]
+struct MinimapElement;
+
+/// Marker for minimap player indicators
+#[derive(Component)]
+struct MinimapPlayer {
+    tracked_player: Entity,
+}
+
+/// Marker for bomb sprites
+#[derive(Component)]
+struct BombMarker {
+    bomb_id: uuid::Uuid,
+}
+
+/// Bomb timer text component
+#[derive(Component)]
+struct BombTimerText {
+    bomb_entity: Entity,
+}
+
+/// Explosion animation component
+#[derive(Component)]
+struct Explosion {
+    /// Time remaining before despawn (in seconds)
+    lifetime: f32,
+    /// Initial alpha for fade out
+    initial_alpha: f32,
+}
+
 // =============================================================================
 // Resources
 // =============================================================================
@@ -129,6 +188,14 @@ impl Default for TimeRemaining {
 #[derive(Resource, Default)]
 struct RemotePlayers(std::collections::HashMap<uuid::Uuid, Entity>);
 
+/// Current bomb states from server
+#[derive(Resource, Default)]
+struct BombStates(Vec<thermite_server::protocol::BombState>);
+
+/// Previous bomb states for detecting explosions
+#[derive(Resource, Default)]
+struct PreviousBombStates(Vec<thermite_server::protocol::BombState>);
+
 // =============================================================================
 // Main Entry Point
 // =============================================================================
@@ -139,6 +206,7 @@ fn main() {
             primary_window: Some(Window {
                 title: "Thermite".to_string(),
                 resolution: (800.0, 600.0).into(),
+                resizable: true,
                 ..default()
             }),
             ..default()
@@ -150,8 +218,13 @@ fn main() {
         .init_resource::<ServerTick>()
         .init_resource::<TimeRemaining>()
         .init_resource::<RemotePlayers>()
+        .init_resource::<BombStates>()
+        .init_resource::<PreviousBombStates>()
         // Startup systems
-        .add_systems(Startup, (setup_camera, setup_grid, spawn_local_player))
+        .add_systems(
+            Startup,
+            (setup_camera, setup_grid, setup_ui, spawn_local_player),
+        )
         // Update systems
         .add_systems(
             Update,
@@ -159,7 +232,12 @@ fn main() {
                 handle_input,
                 receive_network_messages,
                 update_player_transforms,
-                update_timer_display,
+                update_health_bars,
+                update_raid_timer_ui,
+                update_minimap,
+                update_bomb_sprites,
+                spawn_explosions,
+                update_explosions,
             ),
         )
         .run();
@@ -181,27 +259,41 @@ fn setup_camera(mut commands: Commands) {
 }
 
 fn setup_grid(mut commands: Commands) {
-    // Render grid tiles
+    // Render grid tiles with enhanced visual polish
     for y in 0..GRID_HEIGHT {
         for x in 0..GRID_WIDTH {
             let world_x = x as f32 * TILE_SIZE + TILE_SIZE / 2.0;
             let world_y = y as f32 * TILE_SIZE + TILE_SIZE / 2.0;
 
-            // Checkerboard pattern for visibility
-            let color = if (x + y) % 2 == 0 {
-                Color::srgb(0.2, 0.2, 0.2)
+            // Enhanced checkerboard pattern with better contrast
+            let is_dark = (x + y) % 2 == 0;
+            let color = if is_dark {
+                Color::srgb(0.15, 0.16, 0.18) // Darker tiles
             } else {
-                Color::srgb(0.25, 0.25, 0.25)
+                Color::srgb(0.20, 0.22, 0.24) // Lighter tiles
             };
 
+            // Spawn main tile
             commands.spawn((
                 Sprite {
                     color,
-                    custom_size: Some(Vec2::splat(TILE_SIZE - 1.0)),
+                    custom_size: Some(Vec2::splat(TILE_SIZE - 2.0)), // Gap for grid lines
                     ..default()
                 },
                 Transform::from_xyz(world_x, world_y, 0.0),
             ));
+
+            // Add subtle highlight on lighter tiles for depth
+            if !is_dark {
+                commands.spawn((
+                    Sprite {
+                        color: Color::srgba(0.3, 0.35, 0.4, 0.15), // Subtle blue highlight
+                        custom_size: Some(Vec2::new(TILE_SIZE - 4.0, 2.0)),
+                        ..default()
+                    },
+                    Transform::from_xyz(world_x, world_y + TILE_SIZE / 2.0 - 3.0, 0.01),
+                ));
+            }
         }
     }
 }
@@ -217,6 +309,7 @@ fn spawn_local_player(mut commands: Commands) {
             x: start_pos.x,
             y: start_pos.y,
         },
+        Health::new(100),
         Sprite {
             color: Color::srgb(0.2, 0.8, 0.2), // Green for local player
             custom_size: Some(Vec2::splat(TILE_SIZE - 4.0)),
@@ -228,6 +321,64 @@ fn spawn_local_player(mut commands: Commands) {
             1.0,
         ),
     ));
+}
+
+fn setup_ui(mut commands: Commands) {
+    // Spawn raid timer UI at top center
+    commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(10.0),
+                left: Val::Percent(50.0),
+                margin: UiRect {
+                    left: Val::Px(-100.0), // Center offset
+                    ..default()
+                },
+                padding: UiRect::all(Val::Px(10.0)),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
+            RaidTimerText,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("5:00"),
+                TextFont {
+                    font_size: 32.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 1.0, 1.0)),
+            ));
+        });
+
+    // Spawn minimap background at bottom right
+    let minimap_size = 150.0;
+    commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                bottom: Val::Px(10.0),
+                right: Val::Px(10.0),
+                width: Val::Px(minimap_size),
+                height: Val::Px(minimap_size),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+            MinimapElement,
+        ))
+        .with_children(|parent| {
+            // Add minimap border
+            parent.spawn((
+                Node {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    border: UiRect::all(Val::Px(2.0)),
+                    ..default()
+                },
+                BorderColor(Color::srgb(0.5, 0.5, 0.5)),
+            ));
+        });
 }
 
 // =============================================================================
@@ -307,6 +458,7 @@ fn receive_network_messages(
     mut network: ResMut<NetworkState>,
     mut server_tick: ResMut<ServerTick>,
     mut time_remaining: ResMut<TimeRemaining>,
+    mut bomb_states: ResMut<BombStates>,
     mut pending_inputs: ResMut<PendingInputs>,
     mut remote_players: ResMut<RemotePlayers>,
     mut local_player_query: Query<
@@ -344,11 +496,12 @@ fn receive_network_messages(
             ServerMessage::StateUpdate {
                 tick,
                 players,
-                bombs: _,
+                bombs,
                 time_remaining_ms,
             } => {
                 server_tick.0 = tick;
                 time_remaining.0 = time_remaining_ms;
+                bomb_states.0 = bombs;
 
                 // Update player positions
                 for player_state in players {
@@ -465,15 +618,289 @@ fn update_player_transforms(
     }
 }
 
-fn update_timer_display(time_remaining: Res<TimeRemaining>) {
-    // Timer display would update a UI element
-    // For now, just log periodically (every 10 seconds)
-    if time_remaining.is_changed() {
-        let seconds = time_remaining.0 / 1000;
-        let minutes = seconds / 60;
-        let secs = seconds % 60;
-        if secs == 0 {
-            info!("Time remaining: {}:{:02}", minutes, secs);
+fn update_health_bars(
+    mut commands: Commands,
+    players: Query<(Entity, &Health, &Transform), Or<(With<LocalPlayer>, With<RemotePlayer>)>>,
+    mut health_bars: Query<(&HealthBar, &mut Transform, &mut Sprite), Without<LocalPlayer>>,
+    existing_bars: Query<&HealthBar>,
+) {
+    // Create health bars for players that don't have one
+    for (player_entity, _health, player_transform) in players.iter() {
+        let has_bar = existing_bars
+            .iter()
+            .any(|bar| bar.owner == player_entity);
+
+        if !has_bar {
+            // Spawn health bar above player
+            commands.spawn((
+                HealthBar {
+                    owner: player_entity,
+                },
+                Sprite {
+                    color: Color::srgb(0.0, 1.0, 0.0),
+                    custom_size: Some(Vec2::new(TILE_SIZE - 4.0, 4.0)),
+                    ..default()
+                },
+                Transform::from_xyz(
+                    player_transform.translation.x,
+                    player_transform.translation.y + TILE_SIZE / 2.0 + 4.0,
+                    2.0,
+                ),
+            ));
+        }
+    }
+
+    // Update existing health bars
+    for (health_bar, mut bar_transform, mut bar_sprite) in health_bars.iter_mut() {
+        if let Ok((_, health, player_transform)) = players.get(health_bar.owner) {
+            // Position above owner
+            bar_transform.translation.x = player_transform.translation.x;
+            bar_transform.translation.y = player_transform.translation.y + TILE_SIZE / 2.0 + 4.0;
+
+            // Update color based on health percentage
+            let health_pct = health.percentage();
+            bar_sprite.color = if health_pct > 0.6 {
+                Color::srgb(0.0, 1.0, 0.0) // Green
+            } else if health_pct > 0.3 {
+                Color::srgb(1.0, 1.0, 0.0) // Yellow
+            } else {
+                Color::srgb(1.0, 0.0, 0.0) // Red
+            };
+
+            // Scale width based on health
+            bar_sprite.custom_size = Some(Vec2::new((TILE_SIZE - 4.0) * health_pct, 4.0));
+        }
+    }
+}
+
+fn update_raid_timer_ui(
+    time_remaining: Res<TimeRemaining>,
+    timer_query: Query<Entity, With<RaidTimerText>>,
+    mut text_query: Query<&mut Text>,
+    children_query: Query<&Children>,
+) {
+    if !time_remaining.is_changed() {
+        return;
+    }
+
+    for timer_entity in timer_query.iter() {
+        if let Ok(children) = children_query.get(timer_entity) {
+            for child in children.iter() {
+                if let Ok(mut text) = text_query.get_mut(child) {
+                    let total_seconds = time_remaining.0 / 1000;
+                    let minutes = total_seconds / 60;
+                    let seconds = total_seconds % 60;
+
+                    **text = format!("{}:{:02}", minutes, seconds);
+                }
+            }
+        }
+    }
+}
+
+fn update_minimap(
+    mut commands: Commands,
+    minimap_query: Query<Entity, With<MinimapElement>>,
+    players: Query<(Entity, &GridPosition), Or<(With<LocalPlayer>, With<RemotePlayer>)>>,
+    local_player: Query<Entity, With<LocalPlayer>>,
+    mut minimap_players: Query<(&MinimapPlayer, &mut Node, &mut BackgroundColor)>,
+    existing_minimap_players: Query<&MinimapPlayer>,
+) {
+    let minimap_size = 150.0;
+    let scale_x = minimap_size / (GRID_WIDTH as f32);
+    let scale_y = minimap_size / (GRID_HEIGHT as f32);
+
+    // Get the minimap parent entity
+    let Ok(minimap_entity) = minimap_query.single() else {
+        return;
+    };
+
+    let local_player_entity = local_player.single().ok();
+
+    // Create minimap indicators for new players
+    for (player_entity, _) in players.iter() {
+        let has_indicator = existing_minimap_players
+            .iter()
+            .any(|indicator| indicator.tracked_player == player_entity);
+
+        if !has_indicator {
+            let is_local = Some(player_entity) == local_player_entity;
+            let color = if is_local {
+                Color::srgb(0.2, 0.8, 0.2) // Green for local
+            } else {
+                Color::srgb(0.8, 0.2, 0.2) // Red for remote
+            };
+
+            commands.entity(minimap_entity).with_children(|parent| {
+                parent.spawn((
+                    MinimapPlayer {
+                        tracked_player: player_entity,
+                    },
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: Val::Px(4.0),
+                        height: Val::Px(4.0),
+                        ..default()
+                    },
+                    BackgroundColor(color),
+                ));
+            });
+        }
+    }
+
+    // Update minimap indicator positions
+    for (minimap_player, mut node, _) in minimap_players.iter_mut() {
+        if let Ok((_, grid_pos)) = players.get(minimap_player.tracked_player) {
+            node.left = Val::Px(grid_pos.x as f32 * scale_x);
+            node.top = Val::Px(grid_pos.y as f32 * scale_y);
+        }
+    }
+}
+
+/// Update bomb sprites based on server bomb states
+fn update_bomb_sprites(
+    mut commands: Commands,
+    bomb_states: Res<BombStates>,
+    existing_bombs: Query<(Entity, &BombMarker)>,
+    mut bomb_sprites: Query<(&BombMarker, &mut Transform, &Children)>,
+    mut bomb_timer_texts: Query<(&BombTimerText, &mut Text)>,
+) {
+    // Track which bombs should exist
+    let current_bomb_ids: std::collections::HashSet<uuid::Uuid> =
+        bomb_states.0.iter().map(|b| b.id).collect();
+
+    // Remove bombs that no longer exist
+    for (entity, bomb_marker) in existing_bombs.iter() {
+        if !current_bomb_ids.contains(&bomb_marker.bomb_id) {
+            commands.entity(entity).despawn();
+        }
+    }
+
+    // Create or update bombs
+    for bomb_state in bomb_states.0.iter() {
+        let exists = existing_bombs
+            .iter()
+            .any(|(_, marker)| marker.bomb_id == bomb_state.id);
+
+        if !exists {
+            // Spawn new bomb sprite with timer text
+            let bomb_entity = commands
+                .spawn((
+                    BombMarker {
+                        bomb_id: bomb_state.id,
+                    },
+                    Sprite {
+                        color: Color::srgb(0.8, 0.1, 0.1), // Red bomb placeholder
+                        custom_size: Some(Vec2::new(TILE_SIZE * 0.8, TILE_SIZE * 0.8)),
+                        ..default()
+                    },
+                    Transform::from_xyz(
+                        bomb_state.position.x as f32 * TILE_SIZE,
+                        bomb_state.position.y as f32 * TILE_SIZE,
+                        1.0,
+                    ),
+                ))
+                .id();
+
+            // Spawn timer text as child
+            commands.entity(bomb_entity).with_children(|parent| {
+                parent.spawn((
+                    BombTimerText {
+                        bomb_entity,
+                    },
+                    Text2d::new(format!("{:.1}", bomb_state.timer_ms as f32 / 1000.0)),
+                    TextFont {
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextColor(Color::WHITE),
+                    Transform::from_xyz(0.0, 0.0, 0.1),
+                ));
+            });
+        } else {
+            // Update existing bomb position (bombs don't move, but just in case)
+            for (bomb_marker, mut transform, children) in bomb_sprites.iter_mut() {
+                if bomb_marker.bomb_id == bomb_state.id {
+                    transform.translation.x = bomb_state.position.x as f32 * TILE_SIZE;
+                    transform.translation.y = bomb_state.position.y as f32 * TILE_SIZE;
+
+                    // Update timer text
+                    for child in children.iter() {
+                        if let Ok((_, mut text)) = bomb_timer_texts.get_mut(child) {
+                            **text = format!("{:.1}", bomb_state.timer_ms as f32 / 1000.0);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Spawn explosion animations when bombs disappear
+fn spawn_explosions(
+    mut commands: Commands,
+    bomb_states: Res<BombStates>,
+    mut previous_bomb_states: ResMut<PreviousBombStates>,
+) {
+    // Find bombs that existed before but don't exist now (likely exploded)
+    let current_bomb_ids: std::collections::HashSet<uuid::Uuid> =
+        bomb_states.0.iter().map(|b| b.id).collect();
+
+    for prev_bomb in previous_bomb_states.0.iter() {
+        if !current_bomb_ids.contains(&prev_bomb.id) {
+            // Bomb disappeared - spawn explosion animation
+            let explosion_size = TILE_SIZE * 3.0; // Placeholder explosion size
+
+            commands.spawn((
+                Explosion {
+                    lifetime: 0.5, // 0.5 second animation
+                    initial_alpha: 1.0,
+                },
+                Sprite {
+                    color: Color::srgba(1.0, 0.5, 0.0, 1.0), // Orange explosion
+                    custom_size: Some(Vec2::new(explosion_size, explosion_size)),
+                    ..default()
+                },
+                Transform::from_xyz(
+                    prev_bomb.position.x as f32 * TILE_SIZE,
+                    prev_bomb.position.y as f32 * TILE_SIZE,
+                    0.5,
+                ),
+            ));
+        }
+    }
+
+    // Update previous states for next frame
+    previous_bomb_states.0 = bomb_states.0.clone();
+}
+
+/// Update and fade out explosion animations
+fn update_explosions(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut explosions: Query<(Entity, &mut Explosion, &mut Sprite, &mut Transform)>,
+) {
+    for (entity, mut explosion, mut sprite, mut transform) in explosions.iter_mut() {
+        explosion.lifetime -= time.delta_secs();
+
+        if explosion.lifetime <= 0.0 {
+            // Explosion finished, despawn
+            commands.entity(entity).despawn();
+        } else {
+            // Fade out and expand
+            let progress = 1.0 - (explosion.lifetime / 0.5);
+            let alpha = explosion.initial_alpha * (1.0 - progress);
+
+            // Update alpha
+            sprite.color = Color::srgba(1.0, 0.5, 0.0, alpha);
+
+            // Expand size
+            let base_size = TILE_SIZE * 3.0;
+            let expanded_size = base_size * (1.0 + progress * 0.5);
+            sprite.custom_size = Some(Vec2::new(expanded_size, expanded_size));
+
+            // Slight scale effect
+            transform.scale = Vec3::splat(1.0 + progress * 0.3);
         }
     }
 }
