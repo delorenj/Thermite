@@ -1,7 +1,7 @@
 version: "6.0.0"
 project_name: "Thermite"
 project_level: 4
-current_sprint: 2
+current_sprint: 3
 sprint_plan_path: "docs/sprint-plan-thermite-2026-01-04.md"
 
 sprints:
@@ -120,12 +120,12 @@ sprints:
           Note: Bomb and explosion systems are placeholder implementations pending STORY-003 through STORY-007.
 
   - sprint_number: 3
-    start_date: "2026-02-03"
-    end_date: "2026-02-14"
+    start_date: "2026-01-09"
+    end_date: "2026-01-23"
     capacity_points: 30
     committed_points: 29
     completed_points: 0
-    status: "not_started"
+    status: "in_progress"
     goal: "Implement core bomb combat system"
     stories:
       - story_id: "STORY-003"
