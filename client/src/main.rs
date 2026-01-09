@@ -601,6 +601,18 @@ fn receive_network_messages(
                 }
             }
 
+            ServerMessage::PlayerDamaged {
+                player_id,
+                damage_amount,
+                new_health,
+                killer_id,
+            } => {
+                info!(
+                    "Player {} took {} damage (health: {}), source: {:?}",
+                    player_id, damage_amount, new_health, killer_id
+                );
+            }
+
             ServerMessage::PlayerDied {
                 player_id,
                 killer_id,

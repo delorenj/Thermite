@@ -30,6 +30,9 @@ impl Default for MatchConfig {
 /// Detonation event data
 pub type DetonationEvent = (Uuid, Position, Vec<Position>, Vec<Position>);
 
+/// Damage event data (player_id, damage_amount, new_health, killer_id)
+pub type DamageEvent = (Uuid, i32, i32, Option<Uuid>);
+
 /// Game state for a single match
 #[derive(Debug)]
 pub struct GameState {
@@ -51,6 +54,8 @@ pub struct GameState {
     pub is_active: bool,
     /// Detonation events from this tick (bomb_id, position, blast_tiles, destroyed_tiles)
     pub pending_detonations: Vec<DetonationEvent>,
+    /// Damage events from this tick (player_id, damage_amount, new_health, killer_id)
+    pub pending_damage_events: Vec<DamageEvent>,
 }
 
 /// A bomb entity
@@ -96,6 +101,7 @@ impl GameState {
             time_remaining_ms,
             is_active: true,
             pending_detonations: Vec::new(),
+            pending_damage_events: Vec::new(),
         }
     }
 
@@ -205,8 +211,9 @@ impl GameState {
 
         self.tick += 1;
 
-        // Clear previous tick's detonations
+        // Clear previous tick's events
         self.pending_detonations.clear();
+        self.pending_damage_events.clear();
 
         // Decrement timer
         let tick_ms = self.config.tick_rate_ms;
@@ -305,6 +312,22 @@ impl GameState {
                 // Remove destructible tiles from grid
                 for pos in &destroyed_tiles {
                     self.grid.set_tile_at(pos.x, pos.y, Tile::Floor);
+                }
+
+                // Apply damage to players in blast area
+                for player in self.players.values_mut() {
+                    if player.is_alive && blast_tiles.contains(&player.position) {
+                        const BOMB_DAMAGE: i32 = 100; // Basic bomb is one-hit kill
+                        player.take_damage(BOMB_DAMAGE);
+
+                        // Track damage event
+                        self.pending_damage_events.push((
+                            player.id,
+                            BOMB_DAMAGE,
+                            player.health,
+                            Some(bomb.owner_id),
+                        ));
+                    }
                 }
 
                 // Check for chain reactions (other bombs in blast area)
@@ -744,5 +767,203 @@ mod tests {
         // Next tick - events should be cleared
         state.tick();
         assert_eq!(state.pending_detonations.len(), 0);
+    }
+
+    #[test]
+    fn test_player_takes_damage_from_bomb() {
+        let mut state = create_test_state();
+
+        // Add player at position (5, 5)
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        let player = state.get_player(&player_id).unwrap();
+        assert_eq!(player.health, 100);
+        assert!(player.is_alive);
+
+        // Place bomb at same position
+        let bomb_owner_id = Uuid::new_v4();
+        let bomb = Bomb::new(bomb_owner_id, Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate bomb
+        state.tick();
+
+        // Player should be dead
+        let player = state.get_player(&player_id).unwrap();
+        assert_eq!(player.health, 0);
+        assert!(!player.is_alive);
+
+        // Should have damage event
+        assert_eq!(state.pending_damage_events.len(), 1);
+        let (event_player_id, damage, new_health, killer_id) = &state.pending_damage_events[0];
+        assert_eq!(*event_player_id, player_id);
+        assert_eq!(*damage, 100);
+        assert_eq!(*new_health, 0);
+        assert_eq!(*killer_id, Some(bomb_owner_id));
+    }
+
+    #[test]
+    fn test_player_takes_damage_from_blast_radius() {
+        let mut state = create_test_state();
+
+        // Add player 2 tiles north of bomb
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 3))
+            .expect("Failed to add player");
+
+        // Place bomb with range 2
+        let bomb_owner_id = Uuid::new_v4();
+        let bomb = Bomb::new(bomb_owner_id, Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+
+        // Player should be dead
+        let player = state.get_player(&player_id).unwrap();
+        assert_eq!(player.health, 0);
+        assert!(!player.is_alive);
+
+        // Should have damage event
+        assert_eq!(state.pending_damage_events.len(), 1);
+    }
+
+    #[test]
+    fn test_player_not_damaged_outside_blast() {
+        let mut state = create_test_state();
+
+        // Add player 3 tiles away (outside range 2)
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 2))
+            .expect("Failed to add player");
+
+        // Place bomb with range 2
+        let bomb_owner_id = Uuid::new_v4();
+        let bomb = Bomb::new(bomb_owner_id, Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+
+        // Player should be unharmed
+        let player = state.get_player(&player_id).unwrap();
+        assert_eq!(player.health, 100);
+        assert!(player.is_alive);
+
+        // No damage events
+        assert_eq!(state.pending_damage_events.len(), 0);
+    }
+
+    #[test]
+    fn test_multiple_players_damaged_by_bomb() {
+        let mut state = create_test_state();
+
+        // Add 3 players in blast area
+        let player1_id = Uuid::new_v4();
+        let player2_id = Uuid::new_v4();
+        let player3_id = Uuid::new_v4();
+
+        state
+            .add_player(player1_id, Position::new(5, 5))
+            .expect("Failed to add player1");
+        state
+            .add_player(player2_id, Position::new(5, 4))
+            .expect("Failed to add player2");
+        state
+            .add_player(player3_id, Position::new(6, 5))
+            .expect("Failed to add player3");
+
+        // Place bomb
+        let bomb_owner_id = Uuid::new_v4();
+        let bomb = Bomb::new(bomb_owner_id, Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+
+        // All 3 players should be dead
+        assert!(!state.get_player(&player1_id).unwrap().is_alive);
+        assert!(!state.get_player(&player2_id).unwrap().is_alive);
+        assert!(!state.get_player(&player3_id).unwrap().is_alive);
+
+        // Should have 3 damage events
+        assert_eq!(state.pending_damage_events.len(), 3);
+    }
+
+    #[test]
+    fn test_dead_player_cannot_take_damage() {
+        let mut state = create_test_state();
+
+        // Add dead player
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        let player = state.players.get_mut(&player_id).unwrap();
+        player.is_alive = false;
+        player.health = 0;
+
+        // Place bomb at same position
+        let bomb_owner_id = Uuid::new_v4();
+        let bomb = Bomb::new(bomb_owner_id, Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+
+        // No damage events (dead player can't take damage)
+        assert_eq!(state.pending_damage_events.len(), 0);
+    }
+
+    #[test]
+    fn test_damage_events_cleared_each_tick() {
+        let mut state = create_test_state();
+
+        // Add player
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        // Place bomb
+        let bomb = Bomb::new(Uuid::new_v4(), Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+        assert_eq!(state.pending_damage_events.len(), 1);
+
+        // Next tick - events should be cleared
+        state.tick();
+        assert_eq!(state.pending_damage_events.len(), 0);
+    }
+
+    #[test]
+    fn test_bomb_damage_is_100() {
+        let mut state = create_test_state();
+
+        // Add player
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        // Place bomb
+        let bomb = Bomb::new(Uuid::new_v4(), Position::new(5, 5), 1, 2);
+        state.bombs.insert(bomb.id, bomb);
+
+        // Tick to detonate
+        state.tick();
+
+        // Verify damage amount is 100
+        assert_eq!(state.pending_damage_events.len(), 1);
+        let (_player_id, damage, _new_health, _killer) = &state.pending_damage_events[0];
+        assert_eq!(*damage, 100);
     }
 }

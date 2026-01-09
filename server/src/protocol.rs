@@ -63,6 +63,13 @@ pub enum ServerMessage {
         blast_tiles: Vec<Position>,
         destroyed_tiles: Vec<Position>,
     },
+    /// Player took damage event
+    PlayerDamaged {
+        player_id: Uuid,
+        damage_amount: i32,
+        new_health: i32,
+        killer_id: Option<Uuid>,
+    },
     /// Pong response
     Pong { timestamp: u64 },
     /// Error message

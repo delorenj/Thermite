@@ -154,6 +154,17 @@ impl GameServer {
             let _ = self.broadcast_tx.send(detonation);
         }
 
+        // Broadcast damage events
+        for (player_id, damage_amount, new_health, killer_id) in &state.pending_damage_events {
+            let damage_event = ServerMessage::PlayerDamaged {
+                player_id: *player_id,
+                damage_amount: *damage_amount,
+                new_health: *new_health,
+                killer_id: *killer_id,
+            };
+            let _ = self.broadcast_tx.send(damage_event);
+        }
+
         // Broadcast state update to all players
         let update = ServerMessage::StateUpdate {
             tick: state.tick,
