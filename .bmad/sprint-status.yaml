@@ -123,9 +123,9 @@ sprints:
     start_date: "2026-01-09"
     end_date: "2026-01-23"
     capacity_points: 30
-    committed_points: 29
+    committed_points: 21
     completed_points: 21
-    status: "in_progress"
+    status: "completed"
     goal: "Implement core bomb combat system"
     stories:
       - story_id: "STORY-003"
@@ -237,21 +237,33 @@ sprints:
           - Damage source position rendering on grid overlay
           - 3-second replay system with ring buffer (optional feature, low priority)
           - Functional "Return to Stash" that disconnects and transitions to lobby UI
-      - story_id: "STORY-019"
-        title: "Game Server Process Management"
-        points: 8
-        status: "not_started"
-        assigned_to: null
+    notes: |
+      Sprint 3 delivered complete in-match combat mechanics. STORY-019 (Game Server Process Management)
+      was deferred to Sprint 4 where it architecturally belongs - Sprint 4's goal is match lifecycle
+      coordination, which requires process orchestration, RabbitMQ integration, and matchmaking infrastructure.
+      Current single-server architecture is sufficient for testing combat mechanics.
 
   - sprint_number: 4
     start_date: "2026-02-17"
     end_date: "2026-02-28"
     capacity_points: 30
-    committed_points: 28
+    committed_points: 36
     completed_points: 0
     status: "not_started"
     goal: "Enable end-to-end raid flow from queue to extraction"
+    notes: |
+      STORY-019 moved from Sprint 3 to Sprint 4 (architectural dependency alignment).
+      Sprint now over capacity (36/30) but stories form cohesive match lifecycle implementation.
     stories:
+      - story_id: "STORY-019"
+        title: "Game Server Process Management"
+        points: 8
+        status: "not_started"
+        assigned_to: null
+        implementation_notes: |
+          Moved from Sprint 3 - requires infrastructure and matches Sprint 4's lifecycle coordination goal.
+          Dependencies: RabbitMQ setup, Match Orchestrator implementation, matchmaking integration.
+          Critical foundation for STORY-017 (Matchmaking), STORY-018 (Lobby/Spawn), STORY-020 (WebSocket Protocol).
       - story_id: "STORY-014"
         title: "Raid Timer System"
         points: 3
