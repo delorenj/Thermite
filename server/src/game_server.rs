@@ -46,6 +46,7 @@ pub enum GameCommand {
 }
 
 /// Shared state for the game server
+#[derive(Clone)]
 pub struct GameServer {
     /// The game state
     state: Arc<RwLock<GameState>>,

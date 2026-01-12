@@ -6,3 +6,4 @@ pub mod map_system;
 pub mod map_template;
 pub mod player;
 pub mod protocol;
+pub mod rabbitmq;

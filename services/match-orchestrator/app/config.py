@@ -26,9 +26,15 @@ class Settings(BaseSettings):
 
     # RabbitMQ Configuration
     rabbitmq_url: str = "amqp://thermite:thermite_dev_password@rabbitmq:5672"
+    rabbitmq_host: str = "rabbitmq"
+    rabbitmq_port: int = 5672
+    rabbitmq_user: str = "thermite"
+    rabbitmq_password: str = "thermite_dev_password"
 
     # Game Server Configuration
     game_server_image: str = "thermite/game-server:latest"
+    game_server_binary: str = "/app/server/target/release/thermite-server"
+    maps_directory: str = "/app/maps"
     max_concurrent_matches: int = 12
 
     # CORS Configuration
