@@ -248,8 +248,8 @@ sprints:
     end_date: "2026-02-28"
     capacity_points: 30
     committed_points: 36
-    completed_points: 0
-    status: "not_started"
+    completed_points: 8
+    status: "in_progress"
     goal: "Enable end-to-end raid flow from queue to extraction"
     notes: |
       STORY-019 moved from Sprint 3 to Sprint 4 (architectural dependency alignment).
@@ -258,12 +258,21 @@ sprints:
       - story_id: "STORY-019"
         title: "Game Server Process Management"
         points: 8
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-12"
         implementation_notes: |
-          Moved from Sprint 3 - requires infrastructure and matches Sprint 4's lifecycle coordination goal.
-          Dependencies: RabbitMQ setup, Match Orchestrator implementation, matchmaking integration.
-          Critical foundation for STORY-017 (Matchmaking), STORY-018 (Lobby/Spawn), STORY-020 (WebSocket Protocol).
+          Process orchestration implemented with concurrent match support (7/8 criteria - 88%).
+
+          Game Server: Refactored as standalone binary with CLI (match_id, port, map_path, rabbitmq_url).
+          RabbitMQ event emission (MatchStarted/MatchEnded), graceful shutdown, 20Hz tick + WebSocket concurrency.
+
+          Match Orchestrator: MatchManager for lifecycle (spawn/monitor/cleanup), subprocess-based spawning,
+          10s health checks with crash detection, state machine (STARTING→RUNNING→ENDED/CRASHED),
+          REST API (POST/GET/DELETE /matches), configurable concurrency (12 matches = 80-96 players).
+
+          Deferred: Reconnection handling (10s window) requires client retry logic + session persistence.
+          Foundation ready for STORY-017 (Matchmaking), STORY-018 (Lobby), STORY-020 (Protocol).
       - story_id: "STORY-014"
         title: "Raid Timer System"
         points: 3
