@@ -248,7 +248,7 @@ sprints:
     end_date: "2026-02-28"
     capacity_points: 30
     committed_points: 36
-    completed_points: 8
+    completed_points: 13
     status: "in_progress"
     goal: "Enable end-to-end raid flow from queue to extraction"
     notes: |
@@ -291,8 +291,26 @@ sprints:
       - story_id: "STORY-017"
         title: "Matchmaking Queue System"
         points: 5
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-13"
+        implementation_notes: |
+          Redis-based matchmaking queue with automatic match creation (7/7 criteria - 100%).
+
+          Queue Manager: FIFO queue using Redis sorted sets (timestamp scoring), add/remove player operations,
+          queue position tracking, wait time estimation (60s per match ahead), 5s match check loop,
+          automatic match creation (4-8 players), player data storage with TTL (300s).
+
+          API Endpoints: POST /api/v1/queue (join queue with loadout), DELETE /api/v1/queue/{player_id} (leave queue),
+          queue position and estimated wait time in response, 409 for duplicate joins, 404 for invalid leaves.
+
+          Match Integration: HTTP client to Match Orchestrator, POST /matches with match_id and map_name,
+          automatic player removal from queue on match creation, match spawning for 4-8 players.
+
+          Testing: 20 tests passing (unit + integration), mocked Redis for unit tests, TestClient for API tests,
+          coverage for queue operations, match creation logic, error handling, and edge cases.
+
+          Ready for STORY-018 (Match Lobby) to handle player transitions from queue to spawned match.
       - story_id: "STORY-018"
         title: "Match Lobby and Player Spawn"
         points: 5
