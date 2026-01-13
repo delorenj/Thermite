@@ -753,22 +753,42 @@ fn update_health_bars(
 fn update_raid_timer_ui(
     time_remaining: Res<TimeRemaining>,
     timer_query: Query<Entity, With<RaidTimerText>>,
-    mut text_query: Query<&mut Text>,
+    mut text_query: Query<(&mut Text, &mut TextColor)>,
+    mut timer_bg_query: Query<&mut BackgroundColor, With<RaidTimerText>>,
     children_query: Query<&Children>,
+    time: Res<Time>,
 ) {
-    if !time_remaining.is_changed() {
+    if !time_remaining.is_changed() && time_remaining.0 > 60000 {
         return;
     }
 
+    let total_seconds = time_remaining.0 / 1000;
+    let minutes = total_seconds / 60;
+    let seconds = total_seconds % 60;
+
+    // Determine color based on remaining time
+    let (text_color, bg_pulse) = if total_seconds <= 60 {
+        // Under 1 minute: red text with pulsing background
+        let pulse = (time.elapsed_secs() * 3.0).sin() * 0.5 + 0.5; // Pulse between 0 and 1
+        let bg_alpha = 0.7 + (pulse * 0.3); // Background pulses between 0.7 and 1.0 alpha
+        (Color::srgb(1.0, 0.3, 0.3), bg_alpha)
+    } else {
+        // Normal: white text
+        (Color::srgb(1.0, 1.0, 1.0), 0.7)
+    };
+
     for timer_entity in timer_query.iter() {
+        // Update background color for pulsing effect
+        if let Ok(mut bg_color) = timer_bg_query.get_mut(timer_entity) {
+            *bg_color = BackgroundColor(Color::srgba(0.0, 0.0, 0.0, bg_pulse));
+        }
+
+        // Update text content and color
         if let Ok(children) = children_query.get(timer_entity) {
             for child in children.iter() {
-                if let Ok(mut text) = text_query.get_mut(child) {
-                    let total_seconds = time_remaining.0 / 1000;
-                    let minutes = total_seconds / 60;
-                    let seconds = total_seconds % 60;
-
+                if let Ok((mut text, mut color)) = text_query.get_mut(child) {
                     **text = format!("{}:{:02}", minutes, seconds);
+                    *color = TextColor(text_color);
                 }
             }
         }
