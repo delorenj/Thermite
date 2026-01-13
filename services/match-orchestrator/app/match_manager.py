@@ -35,6 +35,8 @@ class MatchProcess:
     started_at: datetime = field(default_factory=datetime.utcnow)
     player_count: int = 0
     map_name: str = ""
+    player_ids: List[str] = field(default_factory=list)
+    spawn_assignments: Dict[str, Tuple[int, int]] = field(default_factory=dict)
 
     @property
     def is_alive(self) -> bool:
@@ -114,6 +116,7 @@ class MatchManager:
         self,
         match_id: Optional[uuid.UUID] = None,
         map_name: str = "factory_01",
+        player_ids: Optional[List[str]] = None,
     ) -> MatchProcess:
         """
         Spawn a new Game Server process.
@@ -121,12 +124,14 @@ class MatchManager:
         Args:
             match_id: Optional match ID (generates new if not provided)
             map_name: Map template to use
+            player_ids: Optional list of player UUIDs for spawn distribution
 
         Returns:
             MatchProcess instance
 
         Raises:
             RuntimeError: If process spawn fails
+            ValueError: If spawn distribution fails
         """
         if match_id is None:
             match_id = uuid.uuid4()
@@ -134,11 +139,27 @@ class MatchManager:
         if match_id in self._matches:
             raise ValueError(f"Match {match_id} already exists")
 
+        if player_ids is None:
+            player_ids = []
+
         port = self._allocate_port()
         map_path = Path(settings.maps_directory) / f"{map_name}.json"
 
         if not map_path.exists():
             raise FileNotFoundError(f"Map template not found: {map_path}")
+
+        # Distribute spawn points if players provided
+        spawn_assignments = {}
+        if player_ids:
+            from app.spawn_manager import SpawnManager
+
+            # Map player indices to player_ids
+            spawn_by_index = SpawnManager.distribute_spawn_points(
+                map_name, len(player_ids)
+            )
+            spawn_assignments = {
+                player_ids[int(idx)]: pos for idx, pos in spawn_by_index.items()
+            }
 
         # Build command to spawn Game Server
         rabbitmq_url = f"amqp://{settings.rabbitmq_user}:{settings.rabbitmq_password}@{settings.rabbitmq_host}:{settings.rabbitmq_port}"
@@ -156,6 +177,8 @@ class MatchManager:
             match_id=str(match_id),
             port=port,
             map=map_name,
+            player_count=len(player_ids),
+            spawn_assignments=spawn_assignments,
         )
 
         try:
@@ -171,6 +194,9 @@ class MatchManager:
                 port=port,
                 process=process,
                 map_name=map_name,
+                player_ids=player_ids,
+                player_count=len(player_ids),
+                spawn_assignments=spawn_assignments,
             )
 
             self._matches[match_id] = match_process

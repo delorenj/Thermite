@@ -126,7 +126,11 @@ async def create_match(request: CreateMatchRequest) -> MatchResponse:
         match_process = await manager.create_match(
             match_id=request.match_id,
             map_name=request.map_name,
+            player_ids=request.player_ids,
         )
+
+        # Build WebSocket URL
+        websocket_url = f"ws://localhost:{match_process.port}"
 
         return MatchResponse(
             match_id=match_process.match_id,
@@ -136,6 +140,8 @@ async def create_match(request: CreateMatchRequest) -> MatchResponse:
             player_count=match_process.player_count,
             map_name=match_process.map_name,
             pid=match_process.process.pid if match_process.is_alive else None,
+            websocket_url=websocket_url,
+            spawn_assignments=match_process.spawn_assignments,
         )
 
     except Exception as e:
@@ -163,6 +169,9 @@ async def get_match(match_id: uuid.UUID) -> MatchResponse:
     if not match_process:
         raise HTTPException(status_code=404, detail=f"Match {match_id} not found")
 
+    # Build WebSocket URL
+    websocket_url = f"ws://localhost:{match_process.port}"
+
     return MatchResponse(
         match_id=match_process.match_id,
         status=match_process.status.value,
@@ -171,6 +180,8 @@ async def get_match(match_id: uuid.UUID) -> MatchResponse:
         player_count=match_process.player_count,
         map_name=match_process.map_name,
         pid=match_process.process.pid if match_process.is_alive else None,
+        websocket_url=websocket_url,
+        spawn_assignments=match_process.spawn_assignments,
     )
 
 
@@ -194,6 +205,8 @@ async def list_matches() -> list[MatchResponse]:
             player_count=match.player_count,
             map_name=match.map_name,
             pid=match.process.pid if match.is_alive else None,
+            websocket_url=f"ws://localhost:{match.port}",
+            spawn_assignments=match.spawn_assignments,
         )
         for match in matches.values()
     ]

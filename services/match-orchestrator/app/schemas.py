@@ -37,6 +37,7 @@ class CreateMatchRequest(BaseModel):
 
     match_id: Optional[uuid.UUID] = Field(default=None, description="Optional match UUID")
     map_name: str = Field(default="factory_01", description="Map template name")
+    player_ids: list[str] = Field(default_factory=list, description="List of player UUIDs")
 
 
 class MatchResponse(BaseModel):
@@ -49,3 +50,7 @@ class MatchResponse(BaseModel):
     player_count: int = Field(default=0, description="Current player count")
     map_name: str = Field(..., description="Map name")
     pid: Optional[int] = Field(default=None, description="Process ID")
+    websocket_url: Optional[str] = Field(default=None, description="WebSocket connection URL")
+    spawn_assignments: Optional[dict[str, tuple[int, int]]] = Field(
+        default=None, description="Player spawn positions (player_id -> (x, y))"
+    )

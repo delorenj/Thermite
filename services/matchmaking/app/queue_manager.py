@@ -223,7 +223,22 @@ class QueueManager:
         )
 
         try:
-            await self._create_match_request(match_id, list(player_ids), player_loadouts)
+            match_info = await self._create_match_request(
+                match_id, list(player_ids), player_loadouts
+            )
+
+            # Store match info in Redis for players to retrieve
+            match_key = f"match:info:{match_id}"
+            await self._redis.hset(
+                match_key,
+                mapping={
+                    "websocket_url": match_info.get("websocket_url", ""),
+                    "port": str(match_info.get("port", 0)),
+                    "status": match_info.get("status", ""),
+                },
+            )
+            await self._redis.expire(match_key, 300)  # 5 minute expiry
+
         except Exception as e:
             logger.error(
                 "failed_to_create_match",
@@ -237,7 +252,7 @@ class QueueManager:
         match_id: uuid.UUID,
         player_ids: List[str],
         player_loadouts: Dict[str, dict],
-    ) -> None:
+    ) -> dict:
         """
         Send match creation request to Match Orchestrator.
 
@@ -245,6 +260,9 @@ class QueueManager:
             match_id: UUID for the match
             player_ids: List of player UUIDs
             player_loadouts: Player loadout configurations
+
+        Returns:
+            Match information dictionary with websocket_url, port, spawn_assignments
         """
         # Match Orchestrator endpoint (from docker-compose)
         orchestrator_url = "http://match-orchestrator:8005"
@@ -255,6 +273,7 @@ class QueueManager:
                 json={
                     "match_id": str(match_id),
                     "map_name": "factory_01",  # Default map for MVP
+                    "player_ids": player_ids,
                 },
                 timeout=10.0,
             )
@@ -266,7 +285,9 @@ class QueueManager:
                     match_id=str(match_id),
                     port=match_data.get("port"),
                     player_count=len(player_ids),
+                    websocket_url=match_data.get("websocket_url"),
                 )
+                return match_data
             else:
                 logger.error(
                     "match_creation_failed",
