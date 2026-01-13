@@ -73,6 +73,10 @@ pub struct Player {
     pub bombs_remaining: u32,
     /// Tick number when player last placed a bomb (for cooldown)
     pub last_bomb_placement_tick: u64,
+    /// Number of ticks player has been extracting (60 ticks = 3 seconds required)
+    pub ticks_extracting: u32,
+    /// Position where extraction started (to detect movement interruption)
+    pub position_when_extracting: Option<Position>,
 }
 
 impl Player {
@@ -85,6 +89,8 @@ impl Player {
             last_processed_sequence: 0,
             bombs_remaining: 1, // Start with 1 basic bomb
             last_bomb_placement_tick: 0,
+            ticks_extracting: 0,
+            position_when_extracting: None,
         }
     }
 
@@ -102,6 +108,7 @@ impl Player {
 
     /// Attempt to move the player in the given direction
     /// Returns Ok(new_position) if successful, Err with reason if not
+    /// Resets extraction progress on movement
     pub fn try_move(&mut self, direction: Direction, grid: &Grid) -> Result<Position, MoveError> {
         if !self.is_alive {
             return Err(MoveError::PlayerDead);
@@ -121,10 +128,15 @@ impl Player {
         }
 
         self.position = new_pos;
+
+        // Movement interrupts extraction
+        self.reset_extraction();
+
         Ok(new_pos)
     }
 
     /// Take damage and potentially die
+    /// Resets extraction progress on damage
     pub fn take_damage(&mut self, amount: i32) {
         if !self.is_alive {
             return;
@@ -135,6 +147,20 @@ impl Player {
             self.health = 0;
             self.is_alive = false;
         }
+
+        // Damage interrupts extraction
+        self.reset_extraction();
+    }
+
+    /// Check if player is currently extracting
+    pub fn is_extracting(&self) -> bool {
+        self.ticks_extracting > 0 && self.position_when_extracting.is_some()
+    }
+
+    /// Reset extraction progress (called when player moves or takes damage)
+    pub fn reset_extraction(&mut self) {
+        self.ticks_extracting = 0;
+        self.position_when_extracting = None;
     }
 
     /// Check if player can place a bomb at current tick

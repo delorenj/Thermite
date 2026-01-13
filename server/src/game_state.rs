@@ -36,6 +36,9 @@ pub type DamageEvent = (Uuid, i32, i32, Option<Uuid>);
 /// Death event data (player_id, killer_id, position)
 pub type DeathEvent = (Uuid, Option<Uuid>, Position);
 
+/// Extraction event data (player_id, position)
+pub type ExtractionEvent = (Uuid, Position);
+
 /// Game state for a single match
 #[derive(Debug)]
 pub struct GameState {
@@ -55,12 +58,16 @@ pub struct GameState {
     pub time_remaining_ms: u64,
     /// Whether the match is active
     pub is_active: bool,
+    /// Extraction point positions
+    pub extraction_points: Vec<Position>,
     /// Detonation events from this tick (bomb_id, position, blast_tiles, destroyed_tiles)
     pub pending_detonations: Vec<DetonationEvent>,
     /// Damage events from this tick (player_id, damage_amount, new_health, killer_id)
     pub pending_damage_events: Vec<DamageEvent>,
     /// Death events from this tick (player_id, killer_id, position)
     pub pending_death_events: Vec<DeathEvent>,
+    /// Extraction events from this tick (player_id, position)
+    pub pending_extraction_events: Vec<ExtractionEvent>,
 }
 
 /// A bomb entity
@@ -96,6 +103,10 @@ impl GameState {
     /// Create a new game state with the given grid
     pub fn new(match_id: Uuid, grid: Grid, config: MatchConfig) -> Self {
         let time_remaining_ms = config.duration_ms;
+
+        // Extract extraction points from grid
+        let extraction_points = grid.find_tiles(Tile::Extraction);
+
         GameState {
             match_id,
             tick: 0,
@@ -105,9 +116,11 @@ impl GameState {
             config,
             time_remaining_ms,
             is_active: true,
+            extraction_points,
             pending_detonations: Vec::new(),
             pending_damage_events: Vec::new(),
             pending_death_events: Vec::new(),
+            pending_extraction_events: Vec::new(),
         }
     }
 
@@ -209,6 +222,57 @@ impl GameState {
         Ok(bomb_id)
     }
 
+    /// Process extraction for all players
+    /// Players must stand on extraction point for 60 ticks (3 seconds)
+    /// Returns list of extraction events (player_id, position)
+    fn update_extraction(&mut self) -> Vec<ExtractionEvent> {
+        let mut extraction_events = Vec::new();
+        const EXTRACTION_TICKS_REQUIRED: u32 = 60; // 3 seconds at 50ms per tick
+
+        // Check extraction for each alive player
+        for player in self.players.values_mut() {
+            if !player.is_alive {
+                continue;
+            }
+
+            // Check if player is on an extraction point
+            let on_extraction = self.extraction_points.iter().any(|p| {
+                p.x == player.position.x && p.y == player.position.y
+            });
+
+            if on_extraction {
+                // Start or continue extraction
+                if player.position_when_extracting.is_none() {
+                    // Starting new extraction
+                    player.position_when_extracting = Some(player.position);
+                    player.ticks_extracting = 1;
+                } else if player.position_when_extracting == Some(player.position) {
+                    // Continuing extraction at same position
+                    player.ticks_extracting += 1;
+
+                    // Check if extraction complete
+                    if player.ticks_extracting >= EXTRACTION_TICKS_REQUIRED {
+                        extraction_events.push((player.id, player.position));
+                    }
+                } else {
+                    // Player moved to different extraction point, restart
+                    player.position_when_extracting = Some(player.position);
+                    player.ticks_extracting = 1;
+                }
+            } else {
+                // Not on extraction point, reset progress
+                player.reset_extraction();
+            }
+        }
+
+        // Remove extracted players from match
+        for (player_id, _) in &extraction_events {
+            self.players.remove(player_id);
+        }
+
+        extraction_events
+    }
+
     /// Advance the game state by one tick
     pub fn tick(&mut self) {
         if !self.is_active {
@@ -221,6 +285,7 @@ impl GameState {
         self.pending_detonations.clear();
         self.pending_damage_events.clear();
         self.pending_death_events.clear();
+        self.pending_extraction_events.clear();
 
         // Decrement timer
         let tick_ms = self.config.tick_rate_ms;
@@ -234,6 +299,10 @@ impl GameState {
         // Process bombs and capture detonation events
         let detonations = self.update_bombs();
         self.pending_detonations = detonations;
+
+        // Process extraction and capture extraction events
+        let extractions = self.update_extraction();
+        self.pending_extraction_events = extractions;
     }
 
     /// Calculate blast pattern from bomb position
@@ -1146,5 +1215,227 @@ mod tests {
 
         // No death event for already dead player
         assert_eq!(state.pending_death_events.len(), 0);
+    }
+
+    // ========== Extraction Tests ==========
+
+    #[test]
+    fn test_player_starts_extraction_on_extraction_point() {
+        let mut state = create_test_state();
+
+        // Add extraction point
+        state.grid.set_tile_at(5, 5, Tile::Extraction);
+        state.extraction_points = state.grid.find_tiles(Tile::Extraction);
+
+        // Add player at extraction point
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        // Tick once
+        state.tick();
+
+        // Player should have started extracting
+        let player = state.players.get(&player_id).unwrap();
+        assert_eq!(player.ticks_extracting, 1);
+        assert_eq!(player.position_when_extracting, Some(Position::new(5, 5)));
+    }
+
+    #[test]
+    fn test_extraction_progress_increases_each_tick() {
+        let mut state = create_test_state();
+
+        // Add extraction point
+        state.grid.set_tile_at(5, 5, Tile::Extraction);
+        state.extraction_points = state.grid.find_tiles(Tile::Extraction);
+
+        // Add player at extraction point
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        // Tick 10 times
+        for i in 1..=10 {
+            state.tick();
+            let player = state.players.get(&player_id).unwrap();
+            assert_eq!(player.ticks_extracting, i);
+        }
+    }
+
+    #[test]
+    fn test_extraction_completes_after_60_ticks() {
+        let mut state = create_test_state();
+
+        // Add extraction point
+        state.grid.set_tile_at(5, 5, Tile::Extraction);
+        state.extraction_points = state.grid.find_tiles(Tile::Extraction);
+
+        // Add player at extraction point
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        // Tick 59 times - not yet extracted
+        for _ in 0..59 {
+            state.tick();
+        }
+        assert!(state.players.contains_key(&player_id));
+        assert_eq!(state.pending_extraction_events.len(), 0);
+
+        // Tick 60 - extraction completes
+        state.tick();
+        assert!(!state.players.contains_key(&player_id)); // Player removed
+        assert_eq!(state.pending_extraction_events.len(), 1);
+        let (extracted_id, extracted_pos) = &state.pending_extraction_events[0];
+        assert_eq!(*extracted_id, player_id);
+        assert_eq!(*extracted_pos, Position::new(5, 5));
+    }
+
+    #[test]
+    fn test_extraction_resets_on_movement() {
+        let mut state = create_test_state();
+
+        // Add extraction point
+        state.grid.set_tile_at(5, 5, Tile::Extraction);
+        state.extraction_points = state.grid.find_tiles(Tile::Extraction);
+
+        // Add player at extraction point
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        // Start extracting
+        for _ in 0..10 {
+            state.tick();
+        }
+        assert_eq!(state.players.get(&player_id).unwrap().ticks_extracting, 10);
+
+        // Move player
+        state
+            .process_move(&player_id, Direction::North, 1)
+            .expect("Move failed");
+
+        // Extraction should be reset
+        let player = state.players.get(&player_id).unwrap();
+        assert_eq!(player.ticks_extracting, 0);
+        assert_eq!(player.position_when_extracting, None);
+    }
+
+    #[test]
+    fn test_extraction_resets_on_damage() {
+        let mut state = create_test_state();
+
+        // Add extraction point
+        state.grid.set_tile_at(5, 5, Tile::Extraction);
+        state.extraction_points = state.grid.find_tiles(Tile::Extraction);
+
+        // Add player at extraction point
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        // Start extracting
+        for _ in 0..10 {
+            state.tick();
+        }
+        assert_eq!(state.players.get(&player_id).unwrap().ticks_extracting, 10);
+
+        // Damage player
+        state
+            .players
+            .get_mut(&player_id)
+            .unwrap()
+            .take_damage(50);
+
+        // Extraction should be reset
+        let player = state.players.get(&player_id).unwrap();
+        assert_eq!(player.ticks_extracting, 0);
+        assert_eq!(player.position_when_extracting, None);
+    }
+
+    #[test]
+    fn test_extraction_events_cleared_each_tick() {
+        let mut state = create_test_state();
+
+        // Add extraction point
+        state.grid.set_tile_at(5, 5, Tile::Extraction);
+        state.extraction_points = state.grid.find_tiles(Tile::Extraction);
+
+        // Add player and extract
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        // Complete extraction
+        for _ in 0..60 {
+            state.tick();
+        }
+        assert_eq!(state.pending_extraction_events.len(), 1);
+
+        // Next tick should clear events
+        state.tick();
+        assert_eq!(state.pending_extraction_events.len(), 0);
+    }
+
+    #[test]
+    fn test_dead_player_cannot_extract() {
+        let mut state = create_test_state();
+
+        // Add extraction point
+        state.grid.set_tile_at(5, 5, Tile::Extraction);
+        state.extraction_points = state.grid.find_tiles(Tile::Extraction);
+
+        // Add dead player at extraction point
+        let player_id = Uuid::new_v4();
+        state
+            .add_player(player_id, Position::new(5, 5))
+            .expect("Failed to add player");
+
+        state.players.get_mut(&player_id).unwrap().is_alive = false;
+
+        // Tick multiple times
+        for _ in 0..60 {
+            state.tick();
+        }
+
+        // Dead player should not extract
+        assert_eq!(state.players.get(&player_id).unwrap().ticks_extracting, 0);
+        assert_eq!(state.pending_extraction_events.len(), 0);
+    }
+
+    #[test]
+    fn test_extraction_at_multiple_points() {
+        let mut state = create_test_state();
+
+        // Add multiple extraction points
+        state.grid.set_tile_at(3, 3, Tile::Extraction);
+        state.grid.set_tile_at(7, 7, Tile::Extraction);
+        state.extraction_points = state.grid.find_tiles(Tile::Extraction);
+
+        // Add two players at different extraction points
+        let player1_id = Uuid::new_v4();
+        let player2_id = Uuid::new_v4();
+        state
+            .add_player(player1_id, Position::new(3, 3))
+            .expect("Failed to add player1");
+        state
+            .add_player(player2_id, Position::new(7, 7))
+            .expect("Failed to add player2");
+
+        // Complete extraction for both
+        for _ in 0..60 {
+            state.tick();
+        }
+
+        // Both players should have extracted
+        assert!(!state.players.contains_key(&player1_id));
+        assert!(!state.players.contains_key(&player2_id));
+        assert_eq!(state.pending_extraction_events.len(), 2);
     }
 }

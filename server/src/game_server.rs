@@ -176,6 +176,15 @@ impl GameServer {
             let _ = self.broadcast_tx.send(death_event);
         }
 
+        // Broadcast extraction events
+        for (player_id, position) in &state.pending_extraction_events {
+            let extraction_event = ServerMessage::PlayerExtracted {
+                player_id: *player_id,
+                position: *position,
+            };
+            let _ = self.broadcast_tx.send(extraction_event);
+        }
+
         // Broadcast state update to all players
         let update = ServerMessage::StateUpdate {
             tick: state.tick,

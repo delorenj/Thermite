@@ -70,6 +70,11 @@ pub enum ServerMessage {
         new_health: i32,
         killer_id: Option<Uuid>,
     },
+    /// Player successfully extracted
+    PlayerExtracted {
+        player_id: Uuid,
+        position: Position,
+    },
     /// Pong response
     Pong { timestamp: u64 },
     /// Error message

@@ -126,6 +126,28 @@ impl Grid {
         x < self.width && y < self.height
     }
 
+    /// Find all positions of a specific tile type
+    ///
+    /// # Arguments
+    ///
+    /// * `tile_type` - The tile type to search for
+    ///
+    /// # Returns
+    ///
+    /// A vector of positions where the tile type is found
+    pub fn find_tiles(&self, tile_type: Tile) -> Vec<crate::player::Position> {
+        use crate::player::Position;
+        let mut positions = Vec::new();
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if self.tiles[y][x] == tile_type {
+                    positions.push(Position::new(x, y));
+                }
+            }
+        }
+        positions
+    }
+
     /// Returns the coordinates of all valid neighboring tiles (cardinal directions)
     ///
     /// Returns up to 4 neighbors (north, south, east, west) that are within grid bounds.
