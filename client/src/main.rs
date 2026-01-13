@@ -213,6 +213,18 @@ struct DeathOverlay;
 #[derive(Component)]
 struct DeathOverlayText;
 
+/// Extraction state tracking
+#[derive(Resource, Default)]
+struct ExtractionState {
+    is_extracting: bool,
+    ticks_extracting: u32,
+    extraction_position: Option<Position>,
+}
+
+/// Extraction progress bar UI marker
+#[derive(Component)]
+struct ExtractionProgressBar;
+
 // =============================================================================
 // Main Entry Point
 // =============================================================================
@@ -238,6 +250,7 @@ fn main() {
         .init_resource::<BombStates>()
         .init_resource::<PreviousBombStates>()
         .init_resource::<DeathState>()
+        .init_resource::<ExtractionState>()
         // Startup systems
         .add_systems(
             Startup,
@@ -653,6 +666,24 @@ fn receive_network_messages(
                         death_state.death_position = Some(position);
                         death_state.death_time = Some(time.elapsed_secs());
                         info!("Local player died! Triggering death overlay");
+                    }
+                }
+            }
+
+            ServerMessage::PlayerExtracted {
+                player_id,
+                position,
+            } => {
+                info!(
+                    "Player {} extracted at {:?}",
+                    player_id, position
+                );
+
+                // Check if it's our local player who extracted
+                if let Some(local_player_id) = network.player_id {
+                    if player_id == local_player_id {
+                        info!("Local player successfully extracted!");
+                        // TODO: Show extraction success screen, return to lobby
                     }
                 }
             }
