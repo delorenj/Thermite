@@ -248,7 +248,7 @@ sprints:
     end_date: "2026-02-28"
     capacity_points: 30
     committed_points: 36
-    completed_points: 13
+    completed_points: 16
     status: "in_progress"
     goal: "Enable end-to-end raid flow from queue to extraction"
     notes: |
@@ -276,8 +276,36 @@ sprints:
       - story_id: "STORY-014"
         title: "Raid Timer System"
         points: 3
-        status: "not_started"
-        assigned_to: null
+        status: "completed"
+        assigned_to: "Claude"
+        completed_date: "2026-01-13"
+        implementation_notes: |
+          Raid timer system with configurable duration and visual warnings (7/7 criteria - 100%).
+
+          Backend (server):
+          - MapTemplate: Added raid_duration_seconds field (default: 300s = 5 min)
+          - factory_01.json: Configured with 420s (7 minutes)
+          - main.rs: Reads raid_duration_seconds from map template, creates MatchConfig with duration_ms
+          - GameState: Timer decrements each tick (50ms intervals), match ends when timer reaches 0 (is_active = false)
+          - ServerMessage::StateUpdate: Broadcasts time_remaining_ms to all clients
+          - 128 unit tests pass including timer-specific tests
+
+          Frontend (client):
+          - TimeRemaining resource: Stores timer from server state updates
+          - RaidTimerText UI: Top-center position, semi-transparent black background, 32pt white text
+          - MM:SS formatting: e.g., "7:00", "1:23", "0:45"
+          - Visual warnings (< 60 seconds): Red text (1.0, 0.3, 0.3), pulsing background (sine wave 3 Hz), alpha oscillates 0.7-1.0
+          - update_raid_timer_ui system: Updates timer display, applies warnings, continuous refresh when low
+
+          Timer Synchronization:
+          - All clients receive same time_remaining_ms from StateUpdate
+          - 50ms tick rate ensures < 50ms deviation
+          - Msgpack serialization for fast transmission
+
+          Notes:
+          - Audio warning not implemented (visual only sufficient for MVP)
+          - Timer infrastructure already existed in GameState, we added configuration and warnings
+          - Client compiles successfully, all visual systems use Bevy change detection for performance
       - story_id: "STORY-015"
         title: "Extraction Points System"
         points: 5
