@@ -74,8 +74,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let grid = template.generate_grid(None)?;
     tracing::info!("Map loaded: {}x{}", grid.width, grid.height);
 
-    // Create game server with default config
-    let config = MatchConfig::default();
+    // Create game server with config from map template
+    let config = MatchConfig {
+        duration_ms: template.raid_duration_seconds * 1000,
+        tick_rate_ms: 50, // 20Hz
+    };
+    tracing::info!("Match duration: {}s", template.raid_duration_seconds);
     let (server, command_rx) = GameServer::new(args.match_id, grid, config);
 
     // Bind WebSocket server address

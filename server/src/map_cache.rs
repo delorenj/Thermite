@@ -323,6 +323,7 @@ mod tests {
             }],
             destructible_zones: vec![Point::new(2, 2), Point::new(7, 7)],
             variation_percentage: 0.25,
+            raid_duration_seconds: 300,
         }
     }
 

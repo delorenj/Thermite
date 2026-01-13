@@ -59,10 +59,17 @@ pub struct MapTemplate {
     /// Percentage of destructible zones to fill (0.0-1.0)
     #[serde(default = "default_variation_percentage")]
     pub variation_percentage: f32,
+    /// Raid duration in seconds (defaults to 300 = 5 minutes)
+    #[serde(default = "default_raid_duration_seconds")]
+    pub raid_duration_seconds: u64,
 }
 
 fn default_variation_percentage() -> f32 {
     0.25 // 25% by default (within 20-30% requirement)
+}
+
+fn default_raid_duration_seconds() -> u64 {
+    300 // 5 minutes by default
 }
 
 impl MapTemplate {
@@ -279,6 +286,7 @@ mod tests {
             zones: vec![],
             destructible_zones: vec![],
             variation_percentage: 0.25,
+            raid_duration_seconds: 300,
         };
 
         assert!(template.validate().is_err());
@@ -297,6 +305,7 @@ mod tests {
             zones: vec![],
             destructible_zones: vec![],
             variation_percentage: 0.25,
+            raid_duration_seconds: 300,
         };
 
         assert!(template.validate().is_err());
@@ -315,6 +324,7 @@ mod tests {
             zones: vec![],
             destructible_zones: vec![],
             variation_percentage: 0.25,
+            raid_duration_seconds: 300,
         };
 
         assert!(template.validate().is_err());
@@ -333,6 +343,7 @@ mod tests {
             zones: vec![],
             destructible_zones: vec![],
             variation_percentage: 0.25,
+            raid_duration_seconds: 300,
         };
 
         assert!(template.validate().is_err());
@@ -351,6 +362,7 @@ mod tests {
             zones: vec![],
             destructible_zones: vec![],
             variation_percentage: 1.5, // Invalid
+            raid_duration_seconds: 300,
         };
 
         assert!(template.validate().is_err());
@@ -369,6 +381,7 @@ mod tests {
             zones: vec![],
             destructible_zones: vec![],
             variation_percentage: 0.0,
+            raid_duration_seconds: 300,
         };
 
         let grid = template.generate_grid(Some(42)).unwrap();
@@ -397,6 +410,7 @@ mod tests {
                 Point::new(4, 4),
             ],
             variation_percentage: 0.5, // 50% of 4 = 2 destructibles
+            raid_duration_seconds: 300,
         };
 
         let grid = template.generate_grid(Some(42)).unwrap();
@@ -426,6 +440,7 @@ mod tests {
             zones: vec![],
             destructible_zones: vec![],
             variation_percentage: 0.0,
+            raid_duration_seconds: 300,
         };
 
         let grid = template.generate_grid(Some(42)).unwrap();
@@ -451,6 +466,7 @@ mod tests {
             zones: vec![],
             destructible_zones: vec![],
             variation_percentage: 0.0,
+            raid_duration_seconds: 300,
         };
 
         // Should fail connectivity validation
@@ -470,6 +486,7 @@ mod tests {
             zones: vec![],
             destructible_zones: vec![],
             variation_percentage: 0.0,
+            raid_duration_seconds: 300,
         };
 
         // All spawns should reach all extracts
@@ -495,6 +512,7 @@ mod tests {
                 Point::new(4, 4),
             ],
             variation_percentage: 0.5,
+            raid_duration_seconds: 300,
         };
 
         // Generate with same seed twice
@@ -541,12 +559,16 @@ mod tests {
         assert_eq!(template.width, 20);
         assert_eq!(template.height, 20);
 
-        // Verify spawn points (4 corners)
-        assert_eq!(template.spawn_points.len(), 4);
+        // Verify spawn points (8 total: 4 corners + 4 mid-edges)
+        assert_eq!(template.spawn_points.len(), 8);
         assert!(template.spawn_points.contains(&Point::new(2, 2)));
         assert!(template.spawn_points.contains(&Point::new(17, 2)));
         assert!(template.spawn_points.contains(&Point::new(2, 17)));
         assert!(template.spawn_points.contains(&Point::new(17, 17)));
+        assert!(template.spawn_points.contains(&Point::new(6, 3)));
+        assert!(template.spawn_points.contains(&Point::new(13, 3)));
+        assert!(template.spawn_points.contains(&Point::new(6, 16)));
+        assert!(template.spawn_points.contains(&Point::new(13, 16)));
 
         // Verify extraction points (4 cardinal directions from center)
         assert_eq!(template.extraction_points.len(), 4);
