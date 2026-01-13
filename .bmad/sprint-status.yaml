@@ -314,8 +314,35 @@ sprints:
       - story_id: "STORY-018"
         title: "Match Lobby and Player Spawn"
         points: 5
-        status: "not_started"
-        assigned_to: null
+        status: "in_progress"
+        assigned_to: "Claude"
+        implementation_notes: |
+          Backend spawn distribution implemented (5/7 criteria - 71%).
+
+          Spawn Manager: Load map templates, distribute spawn points randomly to 4-8 players,
+          validate positions (bounds + uniqueness), balanced distribution across map corners and mid-edges.
+
+          Match Orchestrator: CreateMatchRequest accepts player_ids, MatchResponse includes websocket_url
+          and spawn_assignments, MatchProcess stores player spawn data.
+
+          Matchmaking Integration: Queue manager passes player_ids when creating matches, stores match info
+          in Redis for player retrieval, returns WebSocket URL for client connection.
+
+          Map Template: factory_01.json updated with 8 spawn points (4 corners + 4 mid-edges) for balanced
+          distribution and support for 4-8 players.
+
+          Testing: 12 unit tests for SpawnManager (distribution, validation, randomness), all passing.
+
+          Completed Criteria:
+          ✓ Match Orchestrator creates match instance
+          ✓ Players receive WebSocket connection URL
+          ✓ Players spawn at random spawn points (4-8 locations)
+          ✓ No two players spawn on same tile
+          ✓ Spawn positions balanced
+
+          Remaining Criteria:
+          ⏳ 5-10 second lobby countdown displayed (needs client UI component)
+          ⏳ Raid timer starts when all players spawned (implemented in STORY-014)
       - story_id: "STORY-020"
         title: "WebSocket Communication Protocol"
         points: 5
