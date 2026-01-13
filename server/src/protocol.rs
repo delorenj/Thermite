@@ -79,6 +79,8 @@ pub enum ServerMessage {
     Pong { timestamp: u64 },
     /// Error message
     Error { message: String },
+    /// Lobby countdown (players waiting to spawn)
+    LobbyCountdown { seconds_remaining: u32 },
 }
 
 /// Player state for state updates

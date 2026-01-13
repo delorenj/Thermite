@@ -22,6 +22,13 @@ pub enum MatchEvent {
         survivors: Vec<Uuid>,
         timestamp: i64,
     },
+    PlayerExtracted {
+        match_id: Uuid,
+        player_id: Uuid,
+        extraction_position: (usize, usize),
+        time_survived_ms: u64,
+        timestamp: i64,
+    },
 }
 
 pub struct RabbitMQPublisher {
@@ -57,6 +64,7 @@ impl RabbitMQPublisher {
         let routing_key = match event {
             MatchEvent::MatchStarted { .. } => "match.started",
             MatchEvent::MatchEnded { .. } => "match.ended",
+            MatchEvent::PlayerExtracted { .. } => "player.extracted",
         };
 
         let payload = serde_json::to_vec(event)?;

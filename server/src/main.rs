@@ -74,25 +74,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let grid = template.generate_grid(None)?;
     tracing::info!("Map loaded: {}x{}", grid.width, grid.height);
 
-    // Create game server with config from map template
-    let config = MatchConfig {
-        duration_ms: template.raid_duration_seconds * 1000,
-        tick_rate_ms: 50, // 20Hz
-    };
-    tracing::info!("Match duration: {}s", template.raid_duration_seconds);
-    let (server, command_rx) = GameServer::new(args.match_id, grid, config);
-
-    // Bind WebSocket server address
-    let addr: SocketAddr = ([0, 0, 0, 0], args.port).into();
-
-    tracing::info!("Game Server initialized, starting services...");
-
-    // Connect to RabbitMQ if URL provided
+    // Connect to RabbitMQ if URL provided (before creating game server)
     let rabbitmq = if let Some(ref url) = args.rabbitmq_url {
         match RabbitMQPublisher::connect(url, "match_events").await {
             Ok(publisher) => {
                 tracing::info!("Connected to RabbitMQ");
-                Some(publisher)
+                Some(std::sync::Arc::new(publisher))
             }
             Err(e) => {
                 tracing::warn!("Failed to connect to RabbitMQ: {}. Continuing without events.", e);
@@ -103,6 +90,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("No RabbitMQ URL provided, running without event publishing");
         None
     };
+
+    // Create game server with config from map template
+    let config = MatchConfig {
+        duration_ms: template.raid_duration_seconds * 1000,
+        tick_rate_ms: 50,            // 20Hz
+        lobby_duration_ms: 5 * 1000, // 5 seconds lobby
+    };
+    tracing::info!("Match duration: {}s", template.raid_duration_seconds);
+    let (server, command_rx) = GameServer::new(args.match_id, grid, config, rabbitmq.clone());
+
+    // Bind WebSocket server address
+    let addr: SocketAddr = ([0, 0, 0, 0], args.port).into();
+
+    tracing::info!("Game Server initialized, starting services...");
 
     // Emit match started event
     if let Some(ref rmq) = rabbitmq {

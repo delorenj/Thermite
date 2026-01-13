@@ -103,6 +103,10 @@ impl Health {
 #[derive(Component)]
 struct RaidTimerText;
 
+/// Marker for the lobby countdown UI text
+#[derive(Component)]
+struct LobbyCountdownText;
+
 /// Marker for minimap elements
 #[derive(Component)]
 struct MinimapElement;
@@ -184,6 +188,13 @@ impl Default for TimeRemaining {
     }
 }
 
+/// Lobby countdown time remaining
+#[derive(Resource, Default)]
+struct LobbyTime {
+    seconds_remaining: u32,
+    in_lobby: bool,
+}
+
 /// Map of remote players by UUID
 #[derive(Resource, Default)]
 struct RemotePlayers(std::collections::HashMap<uuid::Uuid, Entity>);
@@ -246,6 +257,7 @@ fn main() {
         .init_resource::<PendingInputs>()
         .init_resource::<ServerTick>()
         .init_resource::<TimeRemaining>()
+        .init_resource::<LobbyTime>()
         .init_resource::<RemotePlayers>()
         .init_resource::<BombStates>()
         .init_resource::<PreviousBombStates>()
@@ -265,6 +277,7 @@ fn main() {
                 update_player_transforms,
                 update_health_bars,
                 update_raid_timer_ui,
+                update_lobby_countdown_ui,
                 update_minimap,
                 spawn_death_overlay,
                 update_death_overlay,
@@ -382,6 +395,36 @@ fn setup_ui(mut commands: Commands) {
                     ..default()
                 },
                 TextColor(Color::srgb(1.0, 1.0, 1.0)),
+            ));
+        });
+
+    // Spawn lobby countdown UI at center (hidden by default)
+    commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Percent(50.0),
+                left: Val::Percent(50.0),
+                margin: UiRect {
+                    left: Val::Px(-150.0), // Center offset
+                    top: Val::Px(-50.0),   // Center offset
+                    ..default()
+                },
+                padding: UiRect::all(Val::Px(20.0)),
+                display: Display::None, // Hidden by default
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.9)),
+            LobbyCountdownText,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("Match starting in 5..."),
+                TextFont {
+                    font_size: 48.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 1.0, 0.0)),
             ));
         });
 
@@ -506,6 +549,7 @@ fn receive_network_messages(
     mut network: ResMut<NetworkState>,
     mut server_tick: ResMut<ServerTick>,
     mut time_remaining: ResMut<TimeRemaining>,
+    mut lobby_time: ResMut<LobbyTime>,
     mut bomb_states: ResMut<BombStates>,
     mut pending_inputs: ResMut<PendingInputs>,
     mut remote_players: ResMut<RemotePlayers>,
@@ -696,6 +740,11 @@ fn receive_network_messages(
                 info!("Pong: {}", timestamp);
             }
 
+            ServerMessage::LobbyCountdown { seconds_remaining } => {
+                lobby_time.seconds_remaining = seconds_remaining;
+                lobby_time.in_lobby = true;
+            }
+
             ServerMessage::Error { message } => {
                 error!("Server error: {}", message);
             }
@@ -820,6 +869,34 @@ fn update_raid_timer_ui(
                 if let Ok((mut text, mut color)) = text_query.get_mut(child) {
                     **text = format!("{}:{:02}", minutes, seconds);
                     *color = TextColor(text_color);
+                }
+            }
+        }
+    }
+}
+
+fn update_lobby_countdown_ui(
+    lobby_time: Res<LobbyTime>,
+    countdown_query: Query<Entity, With<LobbyCountdownText>>,
+    mut text_query: Query<&mut Text>,
+    mut node_query: Query<&mut Node, With<LobbyCountdownText>>,
+    children_query: Query<&Children>,
+) {
+    for countdown_entity in countdown_query.iter() {
+        // Show/hide lobby countdown based on lobby state
+        if let Ok(mut node) = node_query.get_mut(countdown_entity) {
+            if lobby_time.in_lobby && lobby_time.seconds_remaining > 0 {
+                node.display = Display::Flex;
+            } else {
+                node.display = Display::None;
+            }
+        }
+
+        // Update text content
+        if let Ok(children) = children_query.get(countdown_entity) {
+            for child in children.iter() {
+                if let Ok(mut text) = text_query.get_mut(child) {
+                    **text = format!("Match starting in {}...", lobby_time.seconds_remaining);
                 }
             }
         }

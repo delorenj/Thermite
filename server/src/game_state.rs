@@ -16,13 +16,16 @@ pub struct MatchConfig {
     pub duration_ms: u64,
     /// Tick rate in milliseconds (50ms = 20Hz)
     pub tick_rate_ms: u64,
+    /// Lobby duration in milliseconds (before match starts)
+    pub lobby_duration_ms: u64,
 }
 
 impl Default for MatchConfig {
     fn default() -> Self {
         MatchConfig {
-            duration_ms: 5 * 60 * 1000, // 5 minutes
-            tick_rate_ms: 50,           // 20Hz
+            duration_ms: 5 * 60 * 1000,  // 5 minutes
+            tick_rate_ms: 50,            // 20Hz
+            lobby_duration_ms: 5 * 1000, // 5 seconds lobby
         }
     }
 }
@@ -68,6 +71,10 @@ pub struct GameState {
     pub pending_death_events: Vec<DeathEvent>,
     /// Extraction events from this tick (player_id, position)
     pub pending_extraction_events: Vec<ExtractionEvent>,
+    /// Lobby time remaining in milliseconds (0 when match has started)
+    pub lobby_time_remaining_ms: u64,
+    /// Whether the match has started (after lobby)
+    pub match_started: bool,
 }
 
 /// A bomb entity
@@ -103,6 +110,7 @@ impl GameState {
     /// Create a new game state with the given grid
     pub fn new(match_id: Uuid, grid: Grid, config: MatchConfig) -> Self {
         let time_remaining_ms = config.duration_ms;
+        let lobby_time_remaining_ms = config.lobby_duration_ms;
 
         // Extract extraction points from grid
         let extraction_points = grid.find_tiles(Tile::Extraction);
@@ -121,6 +129,8 @@ impl GameState {
             pending_damage_events: Vec::new(),
             pending_death_events: Vec::new(),
             pending_extraction_events: Vec::new(),
+            lobby_time_remaining_ms,
+            match_started: false,
         }
     }
 
@@ -287,8 +297,21 @@ impl GameState {
         self.pending_death_events.clear();
         self.pending_extraction_events.clear();
 
-        // Decrement timer
         let tick_ms = self.config.tick_rate_ms;
+
+        // Handle lobby countdown
+        if !self.match_started {
+            if self.lobby_time_remaining_ms > tick_ms {
+                self.lobby_time_remaining_ms -= tick_ms;
+            } else {
+                self.lobby_time_remaining_ms = 0;
+                self.match_started = true;
+            }
+            // Don't process game logic during lobby
+            return;
+        }
+
+        // Match has started, decrement raid timer
         if self.time_remaining_ms > tick_ms {
             self.time_remaining_ms -= tick_ms;
         } else {
