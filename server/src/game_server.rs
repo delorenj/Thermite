@@ -318,6 +318,10 @@ impl GameServer {
                 let mut channels = self.player_channels.write().await;
                 channels.remove(&player_id);
 
+                // Broadcast disconnect notification to remaining players
+                let disconnect_msg = ServerMessage::PlayerDisconnected { player_id };
+                let _ = self.broadcast_tx.send(disconnect_msg);
+
                 info!("Player {} disconnected", player_id);
             }
         }

@@ -745,6 +745,14 @@ fn receive_network_messages(
                 lobby_time.in_lobby = true;
             }
 
+            ServerMessage::PlayerDisconnected { player_id } => {
+                info!("Player {} disconnected from match", player_id);
+                // Remove from remote players if present
+                if let Some(entity) = remote_players.0.remove(&player_id) {
+                    commands.entity(entity).despawn_recursive();
+                }
+            }
+
             ServerMessage::Error { message } => {
                 error!("Server error: {}", message);
             }

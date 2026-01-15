@@ -81,6 +81,8 @@ pub enum ServerMessage {
     Error { message: String },
     /// Lobby countdown (players waiting to spawn)
     LobbyCountdown { seconds_remaining: u32 },
+    /// Player disconnected from match
+    PlayerDisconnected { player_id: Uuid },
 }
 
 /// Player state for state updates
