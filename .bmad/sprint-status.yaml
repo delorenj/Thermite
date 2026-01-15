@@ -254,6 +254,12 @@ sprints:
     notes: |
       STORY-019 moved from Sprint 3 to Sprint 4 (architectural dependency alignment).
       Sprint now over capacity (36/30) but stories form cohesive match lifecycle implementation.
+
+      ARCHITECTURAL SIMPLIFICATION (2026-01-15): Removed RabbitMQ event-driven architecture.
+      - STORY-016 (Extraction Flow) deferred to Sprint 5-6 economy work
+      - Game server simplified: no RabbitMQ dependency, runs standalone
+      - Extraction mechanics complete (STORY-015), persistence layer deferred
+      - Will implement HTTP-based persistence when economy system is built
     stories:
       - story_id: "STORY-019"
         title: "Game Server Process Management"
@@ -264,8 +270,8 @@ sprints:
         implementation_notes: |
           Process orchestration implemented with concurrent match support (7/8 criteria - 88%).
 
-          Game Server: Refactored as standalone binary with CLI (match_id, port, map_path, rabbitmq_url).
-          RabbitMQ event emission (MatchStarted/MatchEnded), graceful shutdown, 20Hz tick + WebSocket concurrency.
+          Game Server: Refactored as standalone binary with CLI (match_id, port, map_path).
+          Graceful shutdown, 20Hz tick + WebSocket concurrency.
 
           Match Orchestrator: MatchManager for lifecycle (spawn/monitor/cleanup), subprocess-based spawning,
           10s health checks with crash detection, state machine (STARTING→RUNNING→ENDED/CRASHED),
@@ -273,6 +279,8 @@ sprints:
 
           Deferred: Reconnection handling (10s window) requires client retry logic + session persistence.
           Foundation ready for STORY-017 (Matchmaking), STORY-018 (Lobby), STORY-020 (Protocol).
+
+          Note (2026-01-15): RabbitMQ dependency removed as part of architectural simplification.
       - story_id: "STORY-014"
         title: "Raid Timer System"
         points: 3
@@ -360,38 +368,38 @@ sprints:
       - story_id: "STORY-016"
         title: "Successful Extraction Flow"
         points: 5
-        status: "in_progress"
+        status: "deferred"
         assigned_to: "Claude"
         implementation_notes: |
-          RabbitMQ event emission for player extractions implemented (1/6 criteria - 17%).
+          ARCHITECTURAL DECISION (2026-01-15): Event-driven architecture deferred in favor of simpler HTTP-based persistence.
 
-          Server (RabbitMQ):
-          - Added PlayerExtracted variant to MatchEvent enum in rabbitmq.rs
-          - Fields: match_id, player_id, extraction_position (x, y), time_survived_ms, timestamp
-          - Routing key: "player.extracted" published to "match_events" topic exchange
-          - GameServer integration: Emits events in process_tick() when extraction occurs
-          - Calculates time_survived_ms as config.duration_ms - time_remaining_ms
-          - Event published via rabbitmq.publish_event() with error logging
+          RabbitMQ removed from game server (simplified architecture):
+          - Removed rabbitmq module and lapin dependency from server
+          - Removed RabbitMQ fields and parameters from GameServer
+          - Removed all MatchEvent emissions (MatchStarted, MatchEnded, PlayerExtracted)
+          - Server now runs standalone without event infrastructure
+          - Extraction still works: players extract successfully, events broadcast via WebSocket
 
-          GameServer modifications:
-          - Added rabbitmq field (Option<Arc<RabbitMQPublisher>>) to GameServer struct
-          - Updated GameServer::new() to accept rabbitmq parameter
-          - main.rs creates Arc-wrapped publisher before GameServer initialization
-          - RabbitMQ events emit after ServerMessage broadcast for extractions
-          - Chrono timestamps added (chrono::Utc::now().timestamp())
+          Rationale:
+          - RabbitMQ is atypical for multiplayer games (most use direct DB writes or HTTP)
+          - Event-driven architecture added operational complexity without MVP benefits
+          - Typical pattern: Game Server → HTTP POST → Persistence Service → Database
+          - Deferred to post-MVP when async processing becomes necessary
 
-          Remaining criteria (5/6):
-          ⏳ Persistence Service processes extraction (stash-service needs RabbitMQ consumer)
-          ⏳ Player returned to stash screen (client UI work)
-          ⏳ Extraction counts as "raid survived" in statistics (persistence + DB)
-          ⏳ Loot value displayed in post-raid summary (client UI work)
-          ⏳ Currency earned from loot sales auto-applied (persistence + DB)
+          Remaining work for full extraction flow (deferred to Sprint 5-6 economy work):
+          ⏳ Add HTTP endpoint in stash-service: POST /matches/{id}/results
+          ⏳ Game server calls persistence endpoint on match end
+          ⏳ Persistence service processes: ADD loot to stash, keep equipped gear
+          ⏳ Player returned to stash screen with updated inventory (client UI)
+          ⏳ Extraction counts as "raid survived" in statistics (DB)
+          ⏳ Loot value displayed in post-raid summary (client UI)
+          ⏳ Currency earned from loot sales auto-applied (DB + economy service)
 
-          Notes:
-          - Server compiles successfully, RabbitMQ events are emitted
-          - Remaining work requires building RabbitMQ consumer in stash-service
-          - Database schema exists (stash_items, match_participants tables)
-          - Client-side post-raid UI implementation needed
+          Current state:
+          - Extraction mechanics complete (STORY-015): players can extract, timer works, events broadcast
+          - Persistence layer will be built when economy system is implemented (Sprint 5-6)
+          - Database schema exists (stash_items, match_participants tables ready)
+          - Simplified architecture makes MVP development faster
       - story_id: "STORY-017"
         title: "Matchmaking Queue System"
         points: 5

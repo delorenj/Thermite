@@ -2,7 +2,6 @@
 //!
 //! Manages WebSocket connections and runs the authoritative game simulation.
 
-use chrono;
 use futures_util::{SinkExt, StreamExt};
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -18,7 +17,6 @@ use crate::game_state::{GameState, MatchConfig};
 use crate::map_system::Grid;
 use crate::player::{Direction, Position};
 use crate::protocol::{ClientMessage, ServerMessage};
-use crate::rabbitmq::{MatchEvent, RabbitMQPublisher};
 
 /// Channel capacity for internal messaging
 const CHANNEL_CAPACITY: usize = 256;
@@ -58,8 +56,6 @@ pub struct GameServer {
     command_tx: mpsc::Sender<GameCommand>,
     /// Per-player response channels
     player_channels: Arc<RwLock<HashMap<Uuid, mpsc::Sender<ServerMessage>>>>,
-    /// RabbitMQ publisher for match events
-    rabbitmq: Option<Arc<RabbitMQPublisher>>,
 }
 
 impl GameServer {
@@ -68,7 +64,6 @@ impl GameServer {
         match_id: Uuid,
         grid: Grid,
         config: MatchConfig,
-        rabbitmq: Option<Arc<RabbitMQPublisher>>,
     ) -> (Self, mpsc::Receiver<GameCommand>) {
         let state = Arc::new(RwLock::new(GameState::new(match_id, grid, config)));
         let (broadcast_tx, _) = broadcast::channel(CHANNEL_CAPACITY);
@@ -81,7 +76,6 @@ impl GameServer {
                 broadcast_tx,
                 command_tx,
                 player_channels,
-                rabbitmq,
             },
             command_rx,
         )
@@ -201,26 +195,6 @@ impl GameServer {
                 position: *position,
             };
             let _ = self.broadcast_tx.send(extraction_event);
-        }
-
-        // Emit RabbitMQ events for extractions
-        if let Some(ref rmq) = self.rabbitmq {
-            let match_id = state.match_id;
-            let time_survived_ms = state.config.duration_ms - state.time_remaining_ms;
-
-            for (player_id, position) in &state.pending_extraction_events {
-                let event = MatchEvent::PlayerExtracted {
-                    match_id,
-                    player_id: *player_id,
-                    extraction_position: (position.x, position.y),
-                    time_survived_ms,
-                    timestamp: chrono::Utc::now().timestamp(),
-                };
-
-                if let Err(e) = rmq.publish_event(&event).await {
-                    warn!("Failed to publish player extracted event: {}", e);
-                }
-            }
         }
 
         // Broadcast state update to all players
@@ -488,7 +462,7 @@ mod tests {
     #[tokio::test]
     async fn test_game_server_creation() {
         let grid = Grid::new(20, 20);
-        let (server, _rx) = GameServer::new(Uuid::new_v4(), grid, MatchConfig::default(), None);
+        let (server, _rx) = GameServer::new(Uuid::new_v4(), grid, MatchConfig::default());
 
         assert!(server.is_active().await);
         assert_eq!(server.get_tick().await, 0);
@@ -497,7 +471,7 @@ mod tests {
     #[tokio::test]
     async fn test_process_tick() {
         let grid = Grid::new(20, 20);
-        let (server, _rx) = GameServer::new(Uuid::new_v4(), grid, MatchConfig::default(), None);
+        let (server, _rx) = GameServer::new(Uuid::new_v4(), grid, MatchConfig::default());
 
         server.process_tick().await;
 
@@ -507,7 +481,7 @@ mod tests {
     #[tokio::test]
     async fn test_player_join_command() {
         let grid = Grid::new(20, 20);
-        let (server, mut rx) = GameServer::new(Uuid::new_v4(), grid, MatchConfig::default(), None);
+        let (server, mut rx) = GameServer::new(Uuid::new_v4(), grid, MatchConfig::default());
 
         let player_id = Uuid::new_v4();
         let (response_tx, _response_rx) = mpsc::channel(16);
@@ -530,7 +504,7 @@ mod tests {
     #[tokio::test]
     async fn test_player_move_command() {
         let grid = Grid::new(20, 20);
-        let (server, _rx) = GameServer::new(Uuid::new_v4(), grid, MatchConfig::default(), None);
+        let (server, _rx) = GameServer::new(Uuid::new_v4(), grid, MatchConfig::default());
 
         let player_id = Uuid::new_v4();
         let (response_tx, mut response_rx) = mpsc::channel(16);
@@ -579,7 +553,7 @@ mod tests {
     #[tokio::test]
     async fn test_player_disconnect_command() {
         let grid = Grid::new(20, 20);
-        let (server, _rx) = GameServer::new(Uuid::new_v4(), grid, MatchConfig::default(), None);
+        let (server, _rx) = GameServer::new(Uuid::new_v4(), grid, MatchConfig::default());
 
         let player_id = Uuid::new_v4();
         let (response_tx, _) = mpsc::channel(16);
