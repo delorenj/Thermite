@@ -3,9 +3,12 @@
 //! Bevy-based game client with WASD movement, client-side prediction,
 //! and WebSocket communication with the game server.
 
+mod puzzle;
+
 use bevy::prelude::*;
 use std::collections::VecDeque;
 
+use puzzle::PuzzleLevelResource;
 use thermite_protocol::player::{Direction, Position};
 use thermite_protocol::protocol::{ClientMessage, PlayerState, ServerMessage};
 
@@ -115,6 +118,14 @@ struct RaidTimerText;
 /// Marker for the lobby countdown UI text
 #[derive(Component)]
 struct LobbyCountdownText;
+
+/// Marker for puzzle goal tile
+#[derive(Component)]
+struct PuzzleGoal;
+
+/// Marker for puzzle status UI text
+#[derive(Component)]
+struct PuzzleStatusText;
 
 /// Marker for minimap elements
 #[derive(Component)]
@@ -245,6 +256,12 @@ struct ExtractionState {
 #[derive(Component)]
 struct ExtractionProgressBar;
 
+/// Puzzle completion state
+#[derive(Resource, Default)]
+struct PuzzleProgress {
+    solved: bool,
+}
+
 // =============================================================================
 // Main Entry Point
 // =============================================================================
@@ -272,10 +289,19 @@ fn main() {
         .init_resource::<PreviousBombStates>()
         .init_resource::<DeathState>()
         .init_resource::<ExtractionState>()
+        .init_resource::<PuzzleProgress>()
         // Startup systems
         .add_systems(
             Startup,
-            (setup_camera, setup_grid, setup_ui, spawn_local_player),
+            (
+                load_puzzle_level,
+                setup_camera,
+                setup_grid,
+                setup_ui,
+                spawn_local_player,
+                spawn_puzzle_goal,
+            )
+                .chain(),
         )
         // Update systems
         .add_systems(
@@ -284,6 +310,7 @@ fn main() {
                 handle_input,
                 receive_network_messages,
                 update_player_transforms,
+                check_puzzle_completion,
                 update_health_bars,
                 update_raid_timer_ui,
                 update_lobby_countdown_ui,
@@ -302,10 +329,20 @@ fn main() {
 // Startup Systems
 // =============================================================================
 
-fn setup_camera(mut commands: Commands) {
-    // Center camera on grid
-    let center_x = (GRID_WIDTH as f32 * TILE_SIZE) / 2.0;
-    let center_y = (GRID_HEIGHT as f32 * TILE_SIZE) / 2.0;
+fn load_puzzle_level(mut commands: Commands) {
+    let puzzle_level = puzzle::load_default_level().unwrap_or_else(|error| {
+        error!("Failed to load embedded puzzle level: {}", error);
+        puzzle::PuzzleLevelResource::fallback()
+    });
+
+    info!("Loaded puzzle level: {}", puzzle_level.level.name);
+    commands.insert_resource(puzzle_level);
+}
+
+fn setup_camera(mut commands: Commands, puzzle_level: Res<PuzzleLevelResource>) {
+    // Center camera on puzzle grid
+    let center_x = (puzzle_level.level.width as f32 * TILE_SIZE) / 2.0;
+    let center_y = (puzzle_level.level.height as f32 * TILE_SIZE) / 2.0;
 
     commands.spawn((
         Camera2d,
@@ -313,19 +350,21 @@ fn setup_camera(mut commands: Commands) {
     ));
 }
 
-fn setup_grid(mut commands: Commands) {
-    // Render grid tiles with enhanced visual polish
-    for y in 0..GRID_HEIGHT {
-        for x in 0..GRID_WIDTH {
+fn setup_grid(mut commands: Commands, puzzle_level: Res<PuzzleLevelResource>) {
+    // Render puzzle grid and walls
+    for y in 0..puzzle_level.level.height {
+        for x in 0..puzzle_level.level.width {
             let world_x = x as f32 * TILE_SIZE + TILE_SIZE / 2.0;
             let world_y = y as f32 * TILE_SIZE + TILE_SIZE / 2.0;
 
-            // Enhanced checkerboard pattern with better contrast
+            let is_wall = puzzle_level.is_wall(x, y);
             let is_dark = (x + y) % 2 == 0;
-            let color = if is_dark {
-                Color::srgb(0.15, 0.16, 0.18) // Darker tiles
+            let color = if is_wall {
+                Color::srgb(0.32, 0.18, 0.18) // Puzzle walls
+            } else if is_dark {
+                Color::srgb(0.15, 0.16, 0.18) // Darker floor tiles
             } else {
-                Color::srgb(0.20, 0.22, 0.24) // Lighter tiles
+                Color::srgb(0.20, 0.22, 0.24) // Lighter floor tiles
             };
 
             // Spawn main tile
@@ -338,8 +377,8 @@ fn setup_grid(mut commands: Commands) {
                 Transform::from_xyz(world_x, world_y, 0.0),
             ));
 
-            // Add subtle highlight on lighter tiles for depth
-            if !is_dark {
+            // Add subtle highlight on lighter floor tiles for depth
+            if !is_dark && !is_wall {
                 commands.spawn((
                     Sprite {
                         color: Color::srgba(0.3, 0.35, 0.4, 0.15), // Subtle blue highlight
@@ -353,9 +392,13 @@ fn setup_grid(mut commands: Commands) {
     }
 }
 
-fn spawn_local_player(mut commands: Commands) {
-    // Spawn local player at default position (will be updated by server)
-    let start_pos = GridPosition { x: 1, y: 1 };
+fn spawn_local_player(mut commands: Commands, puzzle_level: Res<PuzzleLevelResource>) {
+    // Spawn local player from puzzle level spawn point
+    let spawn = puzzle_level.level.player_spawn;
+    let start_pos = GridPosition {
+        x: spawn.x,
+        y: spawn.y,
+    };
 
     commands.spawn((
         LocalPlayer,
@@ -375,6 +418,20 @@ fn spawn_local_player(mut commands: Commands) {
             grid_to_world_y(start_pos.y),
             1.0,
         ),
+    ));
+}
+
+fn spawn_puzzle_goal(mut commands: Commands, puzzle_level: Res<PuzzleLevelResource>) {
+    let goal = puzzle_level.level.goal;
+
+    commands.spawn((
+        PuzzleGoal,
+        Sprite {
+            color: Color::srgb(0.95, 0.82, 0.2),
+            custom_size: Some(Vec2::splat(TILE_SIZE - 8.0)),
+            ..default()
+        },
+        Transform::from_xyz(grid_to_world_x(goal.x), grid_to_world_y(goal.y), 0.8),
     ));
 }
 
@@ -404,6 +461,30 @@ fn setup_ui(mut commands: Commands) {
                     ..default()
                 },
                 TextColor(Color::srgb(1.0, 1.0, 1.0)),
+            ));
+        });
+
+    // Puzzle objective status
+    commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(10.0),
+                left: Val::Px(10.0),
+                padding: UiRect::all(Val::Px(8.0)),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6)),
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                PuzzleStatusText,
+                Text::new("Puzzle: reach the yellow tile"),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.95, 0.95, 0.95)),
             ));
         });
 
@@ -475,6 +556,7 @@ fn handle_input(
     mut sequence: ResMut<InputSequence>,
     mut pending_inputs: ResMut<PendingInputs>,
     network: Res<NetworkState>,
+    puzzle_level: Res<PuzzleLevelResource>,
     mut query: Query<(&GridPosition, &mut PredictedPosition), With<LocalPlayer>>,
 ) {
     // Check for bomb placement (Spacebar)
@@ -515,8 +597,11 @@ fn handle_input(
         if let Ok((_grid_pos, mut predicted_pos)) = query.single_mut() {
             let new_pos = apply_direction(predicted_pos.x, predicted_pos.y, dir);
             if let Some((nx, ny)) = new_pos {
-                // Only predict if within bounds
-                if nx < GRID_WIDTH && ny < GRID_HEIGHT {
+                // Only predict if within bounds and not a puzzle wall
+                if nx < puzzle_level.level.width
+                    && ny < puzzle_level.level.height
+                    && !puzzle_level.is_wall(nx, ny)
+                {
                     let old_x = predicted_pos.x;
                     let old_y = predicted_pos.y;
                     predicted_pos.x = nx;
@@ -792,9 +877,34 @@ fn update_player_transforms(
     }
 }
 
+fn check_puzzle_completion(
+    puzzle_level: Res<PuzzleLevelResource>,
+    mut puzzle_progress: ResMut<PuzzleProgress>,
+    local_player_query: Query<&PredictedPosition, With<LocalPlayer>>,
+    mut puzzle_status_query: Query<&mut Text, With<PuzzleStatusText>>,
+) {
+    if puzzle_progress.solved {
+        return;
+    }
+
+    let Ok(predicted_position) = local_player_query.single() else {
+        return;
+    };
+
+    let goal = puzzle_level.level.goal;
+    if predicted_position.x == goal.x && predicted_position.y == goal.y {
+        puzzle_progress.solved = true;
+        info!("Puzzle solved: reached goal ({}, {})", goal.x, goal.y);
+
+        if let Ok(mut status_text) = puzzle_status_query.single_mut() {
+            **status_text = "Puzzle solved! Press R to retry soon".to_string();
+        }
+    }
+}
+
 fn update_health_bars(
     mut commands: Commands,
-    players: Query<(Entity, &Health, &Transform), Or<(With<LocalPlayer>, With<RemotePlayer>)>>,
+    players: Query<(Entity, &Health, &Transform), Or<(With<LocalPlayer>, With<RemotePlayer>)>>, 
     mut health_bars: Query<(&HealthBar, &mut Transform, &mut Sprite), Without<LocalPlayer>>,
     existing_bars: Query<&HealthBar>,
 ) {
