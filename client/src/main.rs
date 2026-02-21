@@ -5,10 +5,19 @@
 
 use bevy::prelude::*;
 use std::collections::VecDeque;
-use tokio::sync::mpsc;
 
-use thermite_server::player::{Direction, Position};
-use thermite_server::protocol::{ClientMessage, PlayerState, ServerMessage};
+use thermite_protocol::player::{Direction, Position};
+use thermite_protocol::protocol::{ClientMessage, PlayerState, ServerMessage};
+
+#[cfg(target_arch = "wasm32")]
+type ClientMessageSender = crossbeam_channel::Sender<ClientMessage>;
+#[cfg(target_arch = "wasm32")]
+type ServerMessageReceiver = crossbeam_channel::Receiver<ServerMessage>;
+
+#[cfg(not(target_arch = "wasm32"))]
+type ClientMessageSender = tokio::sync::mpsc::UnboundedSender<ClientMessage>;
+#[cfg(not(target_arch = "wasm32"))]
+type ServerMessageReceiver = tokio::sync::mpsc::UnboundedReceiver<ServerMessage>;
 
 // =============================================================================
 // Constants
@@ -146,9 +155,9 @@ struct Explosion {
 #[derive(Resource)]
 struct NetworkState {
     /// Channel to send messages to the network task
-    send_tx: Option<mpsc::UnboundedSender<ClientMessage>>,
+    send_tx: Option<ClientMessageSender>,
     /// Channel to receive messages from the network task
-    recv_rx: Option<mpsc::UnboundedReceiver<ServerMessage>>,
+    recv_rx: Option<ServerMessageReceiver>,
     /// Our assigned player ID from the server
     player_id: Option<uuid::Uuid>,
     /// Whether we're connected
@@ -201,11 +210,11 @@ struct RemotePlayers(std::collections::HashMap<uuid::Uuid, Entity>);
 
 /// Current bomb states from server
 #[derive(Resource, Default)]
-struct BombStates(Vec<thermite_server::protocol::BombState>);
+struct BombStates(Vec<thermite_protocol::protocol::BombState>);
 
 /// Previous bomb states for detecting explosions
 #[derive(Resource, Default)]
-struct PreviousBombStates(Vec<thermite_server::protocol::BombState>);
+struct PreviousBombStates(Vec<thermite_protocol::protocol::BombState>);
 
 /// Death state tracking
 #[derive(Resource, Default)]
